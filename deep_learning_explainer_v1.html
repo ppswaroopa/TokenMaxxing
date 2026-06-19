@@ -1,0 +1,2822 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TokenMaxxing — Getting More Out of AI</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap');
+
+    :root {
+      --bg: #0a0c0f;
+      --surface: #111318;
+      --surface2: #181c24;
+      --border: #1f2530;
+      --accent: #00e5ff;
+      --accent2: #ff6b35;
+      --accent3: #a8ff3e;
+      --accent4: #c084fc;
+      --text: #e8eaf0;
+      --text-dim: #6b7280;
+      --text-mid: #9ca3af;
+      --node-active: #00e5ff;
+      --node-inactive: #1f2530;
+      --weight-pos: #a8ff3e;
+      --weight-neg: #ff6b35;
+
+      /* Section identity colours — used consistently throughout */
+      --col-foundation: #a8ff3e;
+      /* Why it works */
+      --col-howit: #00e5ff;
+      /* The crash course */
+      --col-llm: #c084fc;
+      /* LLMs */
+      --col-usage: #ff6b35;
+      /* How to use it */
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── NAVIGATION ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(10, 12, 15, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      height: 56px;
+    }
+
+    .nav-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      margin-right: auto;
+      opacity: 0.8;
+    }
+
+    .nav-steps {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .nav-step {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-dim);
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    .nav-step:hover {
+      color: var(--text-mid);
+      border-color: var(--border);
+    }
+
+    .nav-step.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(0, 229, 255, 0.06);
+    }
+
+    /* Colour-coded nav dots — each section has a clear identity */
+    .nav-step[data-col="foundation"].active {
+      color: var(--col-foundation);
+      border-color: var(--col-foundation);
+      background: rgba(168, 255, 62, 0.06);
+    }
+
+    .nav-step[data-col="howit"].active {
+      color: var(--col-howit);
+      border-color: var(--col-howit);
+      background: rgba(0, 229, 255, 0.06);
+    }
+
+    .nav-step[data-col="llm"].active {
+      color: var(--col-llm);
+      border-color: var(--col-llm);
+      background: rgba(192, 132, 252, 0.06);
+    }
+
+    .nav-step[data-col="usage"].active {
+      color: var(--col-usage);
+      border-color: var(--col-usage);
+      background: rgba(255, 107, 53, 0.06);
+    }
+
+    /* ── SECTIONS ── */
+    .section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 2rem 4rem;
+      position: relative;
+    }
+
+    .section-inner {
+      max-width: 960px;
+      width: 100%;
+    }
+
+    .section-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+      opacity: 0.7;
+    }
+
+    /* Section accent stripe — left border that tells you where you are */
+    .section-stripe {
+      display: inline-block;
+      width: 3px;
+      height: 1.1em;
+      border-radius: 2px;
+      margin-right: 0.6rem;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+    }
+
+    h2 {
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-mid);
+      margin-bottom: 0.5rem;
+    }
+
+    .lead {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--text-mid);
+      max-width: 640px;
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+
+    .highlight {
+      color: var(--accent);
+    }
+
+    .highlight2 {
+      color: var(--accent2);
+    }
+
+    .highlight3 {
+      color: var(--accent3);
+    }
+
+    .highlight4 {
+      color: var(--accent4);
+    }
+
+    /* ── HERO ── */
+    #hero {
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0, 229, 255, 0.04) 0%, transparent 70%),
+        var(--bg);
+      text-align: center;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #hero .section-inner {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 2.5rem;
+      width: 100%;
+      max-width: 820px;
+    }
+
+    .hero-card {
+      background: var(--surface);
+      padding: 1.4rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.4rem;
+      transition: background 0.2s;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+    }
+
+    .hero-card:hover {
+      background: var(--surface2);
+    }
+
+    /* Each card has a left border colour matching its section */
+    .hero-card[data-section="fn-approx"] {
+      border-left-color: var(--col-foundation);
+    }
+
+    .hero-card[data-section="crash-course"] {
+      border-left-color: var(--col-howit);
+    }
+
+    .hero-card[data-section="llm-section"] {
+      border-left-color: var(--col-llm);
+    }
+
+    .hero-card[data-section="usage-section"] {
+      border-left-color: var(--col-usage);
+    }
+
+    .hero-card-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+
+    .hero-card-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .hero-card-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.63rem;
+      color: var(--text-dim);
+    }
+
+    /* ── CANVAS AREAS ── */
+    .canvas-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .canvas-header {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .dot-r {
+      background: #ff5f57;
+    }
+
+    .dot-y {
+      background: #febc2e;
+    }
+
+    .dot-g {
+      background: #28c840;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* ── LAYOUT ── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 700px) {
+
+      .two-col,
+      .three-col,
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ── INFO CARDS ── */
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .info-card.accent-border {
+      border-color: var(--accent);
+    }
+
+    .info-card.accent2-border {
+      border-color: var(--accent2);
+    }
+
+    .info-card.accent3-border {
+      border-color: var(--accent3);
+    }
+
+    .info-card.accent4-border {
+      border-color: var(--accent4);
+    }
+
+    /* ── MATH DISPLAY ── */
+    .math-block {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 0.75rem 0;
+      line-height: 1.8;
+    }
+
+    .math-block .eq-line {
+      display: block;
+    }
+
+    .math-block .comment {
+      color: var(--text-dim);
+      font-size: 0.75rem;
+    }
+
+    .math-block .val {
+      color: var(--accent3);
+    }
+
+    .math-block .op {
+      color: var(--accent2);
+    }
+
+    .math-block .result {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ── STEP CONTROLS ── */
+    .step-controls {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      padding: 0.5rem 1.1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn.primary {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(0, 229, 255, 0.07);
+    }
+
+    .btn.primary:hover {
+      background: rgba(0, 229, 255, 0.15);
+    }
+
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .step-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    /* ── TOKENS ── */
+    .token-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin: 0.75rem 0;
+    }
+
+    .token {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      transition: all 0.3s;
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    .token.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .token-colors {
+      --tc0: rgba(0, 229, 255, 0.15);
+      --tb0: rgba(0, 229, 255, 0.4);
+      --tc1: rgba(168, 255, 62, 0.15);
+      --tb1: rgba(168, 255, 62, 0.4);
+      --tc2: rgba(255, 107, 53, 0.15);
+      --tb2: rgba(255, 107, 53, 0.4);
+      --tc3: rgba(192, 132, 252, 0.15);
+      --tb3: rgba(192, 132, 252, 0.4);
+      --tc4: rgba(251, 191, 36, 0.15);
+      --tb4: rgba(251, 191, 36, 0.4);
+    }
+
+    /* ── COMPARISON TABLE ── */
+    .tool-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 1rem;
+    }
+
+    .tool-table th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+    }
+
+    .tool-table td {
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid rgba(31, 37, 48, 0.6);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    .tool-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+      letter-spacing: 0.05em;
+      margin: 0.1rem 0.1rem 0.1rem 0;
+    }
+
+    .badge-cyan {
+      background: rgba(0, 229, 255, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(0, 229, 255, 0.25);
+    }
+
+    .badge-green {
+      background: rgba(168, 255, 62, 0.12);
+      color: var(--accent3);
+      border: 1px solid rgba(168, 255, 62, 0.25);
+    }
+
+    .badge-orange {
+      background: rgba(255, 107, 53, 0.12);
+      color: var(--accent2);
+      border: 1px solid rgba(255, 107, 53, 0.25);
+    }
+
+    .badge-purple {
+      background: rgba(192, 132, 252, 0.12);
+      color: var(--accent4);
+      border: 1px solid rgba(192, 132, 252, 0.25);
+    }
+
+    /* ── SCROLL HINT ── */
+    .scroll-hint {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      writing-mode: vertical-lr;
+      letter-spacing: 0.15em;
+      animation: fadeUpDown 2s ease-in-out infinite;
+      transition: opacity 0.4s;
+    }
+
+    @keyframes fadeUpDown {
+
+      0%,
+      100% {
+        opacity: 0.3;
+        transform: translateY(0);
+      }
+
+      50% {
+        opacity: 0.7;
+        transform: translateY(4px);
+      }
+    }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar-wrap {
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent4));
+      border-radius: 2px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glow {
+      text-shadow: 0 0 30px rgba(0, 229, 255, 0.4);
+    }
+
+    /* ── CAN EXAMPLES ── */
+    .can-example {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent2);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      line-height: 1.9;
+      margin: 0.5rem 0;
+    }
+
+    .can-example .comment {
+      color: var(--text-dim);
+    }
+
+    .can-example .keyword {
+      color: var(--accent4);
+    }
+
+    .can-example .str {
+      color: var(--accent3);
+    }
+
+    .can-example .num {
+      color: var(--accent2);
+    }
+
+    /* ── FLOW STEPS ── */
+    .flow-steps {
+      display: flex;
+      gap: 0;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .flow-step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      position: relative;
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .flow-step:not(:last-child)::after {
+      content: '→';
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      z-index: 1;
+      font-size: 0.8rem;
+    }
+
+    .flow-step.active {
+      background: rgba(0, 229, 255, 0.07);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .flow-step small {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      margin-top: 0.25rem;
+    }
+
+    /* ── USAGE PATTERNS (new section) ── */
+    .pattern-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--col-usage);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .pattern-card h3 {
+      color: var(--col-usage);
+      margin-bottom: 0.5rem;
+    }
+
+    .pattern-vs {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1rem;
+      align-items: start;
+      margin: 0.75rem 0;
+    }
+
+    .pattern-vs-divider {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      padding-top: 0.5rem;
+      text-align: center;
+    }
+
+    .prompt-bad {
+      border-left-color: #ff5f5780;
+    }
+
+    .prompt-good {
+      border-left-color: var(--col-foundation);
+    }
+
+    .prompt-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">// TOKENMAXXING</div>
+    <div class="nav-steps">
+      <div class="nav-step active" onclick="scrollToSection('hero')">Intro</div>
+      <div class="nav-step" data-col="foundation" onclick="scrollToSection('fn-approx')">Foundation</div>
+      <div class="nav-step" data-col="howit" onclick="scrollToSection('crash-course')">Crash Course</div>
+      <div class="nav-step" data-col="llm" onclick="scrollToSection('llm-section')">LLMs</div>
+      <div class="nav-step" data-col="usage" onclick="scrollToSection('usage-section')">Using It</div>
+    </div>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════
+     SECTION 1 — HERO
+══════════════════════════════════════════════════════ -->
+  <section class="section" id="hero">
+    <div class="section-inner">
+      <div class="section-tag">// getting more out of AI tools</div>
+      <h1><span class="highlight glow">Token</span>Maxxing</h1>
+      <p class="lead">Understanding just enough about how these models work to stop using them like a search engine —
+        and start using them like a collaborator.</p>
+
+      <div class="hero-grid">
+        <div class="hero-card" data-section="fn-approx" onclick="scrollToSection('fn-approx')">
+          <div class="hero-card-num">00</div>
+          <div class="hero-card-title" style="color:var(--col-foundation)">The Foundation</div>
+          <div class="hero-card-sub">why neural nets work at all</div>
+        </div>
+        <div class="hero-card" data-section="crash-course" onclick="scrollToSection('crash-course')">
+          <div class="hero-card-num">01</div>
+          <div class="hero-card-title" style="color:var(--col-howit)">The Crash Course</div>
+          <div class="hero-card-sub">neurons → backprop → scale</div>
+        </div>
+        <div class="hero-card" data-section="llm-section" onclick="scrollToSection('llm-section')">
+          <div class="hero-card-num">02</div>
+          <div class="hero-card-title" style="color:var(--col-llm)">What's New: LLMs</div>
+          <div class="hero-card-sub">tokens, attention, generation</div>
+        </div>
+        <div class="hero-card" data-section="usage-section" onclick="scrollToSection('usage-section')">
+          <div class="hero-card-num">03</div>
+          <div class="hero-card-title" style="color:var(--col-usage)">Using It Better</div>
+          <div class="hero-card-sub">patterns from real CAN work</div>
+        </div>
+      </div>
+
+      <p
+        style="margin-top:1.75rem; font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--text-dim); line-height:1.8; max-width:540px; text-align:left;">
+        This isn't a course on deep learning. This is my way of - how to use AI, the smallest amount of
+        understanding of the underlying tech to better the use of AI<br><br>
+        <span style="color:var(--text-mid)">Play with the demos.</span>
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+     SECTION 2 — FOUNDATION: WHY IT WORKS
+══════════════════════════════════════════════════════ -->
+  <section class="section" id="fn-approx"
+    style="background: radial-gradient(ellipse 70% 50% at 30% 50%, rgba(168,255,62,0.04) 0%, transparent 70%), var(--bg);">
+    <div class="section-inner">
+      <div class="section-tag" style="color:var(--col-foundation)">// 00 — the foundation</div>
+      <h2>It's just <span class="highlight3">finding a function.</span></h2>
+      <p class="lead">Before any of the neural net machinery makes sense, what is the underlying idea? In nature inputs
+        give outputs they adhere to a pattern. We want to reverse-engineer the function that drives it.</p>
+
+      <div class="two-col" style="margin-bottom:1.5rem;">
+        <div>
+          <h3 style="margin-bottom:0.75rem;">The case you already know</h3>
+          <p style="font-size:0.85rem; color:var(--text-mid); line-height:1.7; margin-bottom:0.75rem;">
+            Say you're characterising a temperature sensor on your gateway board.
+            You know from physics it follows a polynomial. You collect a few (temperature, voltage) pairs
+            and solve for the coefficients. Done.
+          </p>
+          <div class="math-block" style="font-size:0.82rem;">
+            <span class="comment">// Known shape — solve analytically</span>
+            <span class="eq-line">y = <span class="val">a</span>x² + <span class="val">b</span>x + <span
+                class="val">c</span></span>
+            <span class="eq-line">&nbsp;</span>
+            <span class="comment">// data pairs (x₁,y₁), (x₂,y₂), (x₃,y₃) → find a, b, c</span>
+            <span class="eq-line">&nbsp;</span>
+            <span class="eq-line"><span class="result">coefficients = weights</span></span>
+          </div>
+          <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6; margin-top:0.75rem;">
+            This works perfectly — when you know the shape upfront.
+            The problem is, most real systems don't give you that luxury.
+          </p>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:0.75rem;">The case nobody can solve analytically</h3>
+          <p style="font-size:0.85rem; color:var(--text-mid); line-height:1.7; margin-bottom:0.75rem;">
+            What's the function that maps pixels to "stop sign"? Nobody knows.
+            You can't solve for coefficients if you don't know what kind of equation you're dealing with.
+          </p>
+          <div class="info-card accent3-border" style="margin-top:0.25rem;">
+            <h3 style="color:var(--col-foundation)">Universal Approximation Theorem</h3>
+            <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6; margin-top:0.4rem;">
+              A neural network with enough neurons can approximate <em>any</em> continuous function,
+              regardless of shape. You don't need to know the equation.
+              You need data pairs and enough weights to tune.
+              <strong style="color:var(--text)">The weights are the coefficients of an equation you never had to
+                write.</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive canvas -->
+      <h3 style="margin-bottom:0.75rem;">Two ways to fit the same data</h3>
+      <div class="canvas-wrap" style="margin-bottom:1rem;">
+        <div class="canvas-header">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+          <span>function_approximation.demo &nbsp;—&nbsp; click to add data points</span>
+        </div>
+        <canvas id="fa-canvas" width="920" height="280" style="cursor:crosshair;"></canvas>
+      </div>
+      <div class="step-controls">
+        <button class="btn primary" id="fa-btn-poly" onclick="faFitPoly()">▶ Fit polynomial (solve exactly)</button>
+        <button class="btn" id="fa-btn-nn" onclick="faFitNN()">▶ Fit neural net (learn weights)</button>
+        <button class="btn" onclick="faReset()">↺ Reset</button>
+        <span class="step-label" id="fa-label">Click canvas to add points, then fit</span>
+      </div>
+
+      <h3 style="margin-top:2rem; margin-bottom:0.75rem;">Every ML method is a different guess about the function shape
+      </h3>
+      <p style="font-size:0.85rem; color:var(--text-mid); line-height:1.7; margin-bottom:1rem;">
+        That guess is called an <strong style="color:var(--text)">inductive bias</strong>.
+        Neural nets make the least opinionated guess — which is why they're the most flexible,
+        and why they need the most data.
+      </p>
+      <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:1rem;">
+        <div class="info-card" style="border-color:#febc2e;">
+          <div style="font-size:1.3rem; margin-bottom:0.4rem;">📐</div>
+          <h3 style="color:#febc2e;">Linear / Poly</h3>
+          <p style="font-size:0.78rem; color:var(--text-dim); line-height:1.5;">
+            Assumes a known shape. Solve analytically. Works when the assumption holds — sensor calibration, simple
+            regressions.
+          </p>
+          <div class="math-block" style="font-size:0.7rem; margin-top:0.5rem;">y = mx + c</div>
+        </div>
+        <div class="info-card" style="border-color:var(--accent2);">
+          <div style="font-size:1.3rem; margin-bottom:0.4rem;">🌳</div>
+          <h3 style="color:var(--accent2);">Tree / SVM</h3>
+          <p style="font-size:0.78rem; color:var(--text-dim); line-height:1.5;">
+            Assumes piecewise or linearly separable. Good for structured tabular data with clear decision boundaries.
+          </p>
+          <div class="math-block" style="font-size:0.7rem; margin-top:0.5rem;">if x &gt; θ → class A</div>
+        </div>
+        <div class="info-card" style="border-color:var(--col-howit);">
+          <div style="font-size:1.3rem; margin-bottom:0.4rem;">🧠</div>
+          <h3 style="color:var(--col-howit);">Neural Net</h3>
+          <p style="font-size:0.78rem; color:var(--text-dim); line-height:1.5;">
+            Assumes very little. Stacks parameterised transformations. Learns the shape. Needs more data and compute.
+          </p>
+          <div class="math-block" style="font-size:0.7rem; margin-top:0.5rem;">f = σ(Wₙ·…σ(W₁x))</div>
+        </div>
+        <div class="info-card" style="border-color:var(--col-llm);">
+          <div style="font-size:1.3rem; margin-bottom:0.4rem;">🔲</div>
+          <h3 style="color:var(--col-llm);">Transformer</h3>
+          <p style="font-size:0.78rem; color:var(--text-dim); line-height:1.5;">
+            Neural net with one extra assumption: any part of the input can relate to any other part. That's attention.
+          </p>
+          <div class="math-block" style="font-size:0.7rem; margin-top:0.5rem;">structure + learning</div>
+        </div>
+      </div>
+
+      <div class="info-card"
+        style="margin-top:1.5rem; border-color:var(--col-foundation); background:rgba(168,255,62,0.03);">
+        <h3 style="color:var(--col-foundation)">To connect all of this</h3>
+        <p style="font-size:0.92rem; color:var(--text); line-height:1.7; margin-top:0.4rem;">
+          A neural network is a polynomial with millions of terms and a smart structure,
+          whose coefficients are found not by solving equations but by gradient descent —
+          <span style="color:var(--col-foundation)">the same underlying idea, applied to functions too complex to write
+            down.</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+     SECTION 3 — CRASH COURSE (Neuron + Backprop + Network combined)
+══════════════════════════════════════════════════════ -->
+  <section class="section" id="crash-course"
+    style="background: radial-gradient(ellipse 60% 40% at 70% 30%, rgba(0,229,255,0.03) 0%, transparent 60%), var(--bg);">
+    <div class="section-inner">
+      <div class="section-tag" style="color:var(--col-howit)">// 01 — how it came about</div>
+      <h2>The crash course: <span class="highlight">from one neuron to deep learning</span></h2>
+      <p class="lead">Three ideas built on each other over 30 years. You don't need to know the math, seeing how they
+        connect will change how you read model behaviour.</p>
+
+      <!-- ── PART A: Single Neuron ── -->
+      <div style="margin-bottom:2.5rem;">
+        <h3 style="color:var(--col-howit); margin-bottom:0.75rem; font-size:0.8rem; letter-spacing:0.12em;">PART A — THE
+          NEURON</h3>
+        <p style="font-size:0.85rem; color:var(--text-mid); line-height:1.7; margin-bottom:1rem; max-width:600px;">
+          A single neuron is one weighted sum plus a squish function. Every single thing in a large model is just this —
+          repeated billions of times.
+        </p>
+        <div class="two-col">
+          <div class="canvas-wrap">
+            <div class="canvas-header">
+              <div class="dot dot-r"></div>
+              <div class="dot dot-y"></div>
+              <div class="dot dot-g"></div>
+              <span>single_neuron.sim</span>
+            </div>
+            <canvas id="neuron-canvas" width="440" height="300"></canvas>
+          </div>
+          <div>
+            <h3>What's happening</h3>
+            <div class="math-block" id="neuron-math">
+              <span class="eq-line"><span class="comment">// Inputs (e.g. CAN frame features)</span></span>
+              <span class="eq-line">x₁ <span class="op">=</span> <span class="val" id="m-x1">0.8</span>&nbsp; x₂ <span
+                  class="op">=</span> <span class="val" id="m-x2">0.5</span></span>
+              <span class="eq-line">&nbsp;</span>
+              <span class="eq-line"><span class="comment">// Weights — the coefficients being learned</span></span>
+              <span class="eq-line">w₁ <span class="op">=</span> <span class="val" id="m-w1">0.6</span>&nbsp; w₂ <span
+                  class="op">=</span> <span class="val" id="m-w2">-0.3</span>&nbsp; b <span class="op">=</span> <span
+                  class="val" id="m-b">0.1</span></span>
+              <span class="eq-line">&nbsp;</span>
+              <span class="eq-line"><span class="comment">// Weighted sum</span></span>
+              <span class="eq-line">z <span class="op">=</span> w₁·x₁ <span class="op">+</span> w₂·x₂ <span
+                  class="op">+</span> b <span class="op">=</span> <span class="result" id="m-zval">0.43</span></span>
+              <span class="eq-line">&nbsp;</span>
+              <span class="eq-line"><span class="comment">// Activation: squish to a useful range</span></span>
+              <span class="eq-line">output <span class="op">=</span> σ(z) <span class="op">=</span> <span class="result"
+                  id="m-out">0.606</span></span>
+            </div>
+            <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.7; margin-bottom:0.75rem;">
+              The activation function is what lets you stack layers without which, any number of linear layers collapses
+              to one and we lose non-linearity.
+            </p>
+            <div class="step-controls">
+              <button class="btn primary" onclick="animNeuron()">▶ Animate signal</button>
+              <button class="btn" onclick="randomizeNeuron()">↻ Randomize inputs</button>
+            </div>
+          </div>
+        </div>
+        <div class="three-col" style="margin-top:1.25rem;">
+          <div class="info-card accent-border">
+            <h3>Sigmoid σ</h3>
+            <div class="math-block" style="font-size:0.78rem;">1 / (1 + e<sup>-z</sup>)<br><span class="comment">→ 0 to
+                1 · probabilities</span></div>
+          </div>
+          <div class="info-card accent3-border">
+            <h3>ReLU</h3>
+            <div class="math-block" style="font-size:0.78rem;">max(0, z)<br><span class="comment">→ 0 to ∞ · fast, most
+                used</span></div>
+          </div>
+          <div class="info-card accent4-border">
+            <h3>Tanh</h3>
+            <div class="math-block" style="font-size:0.78rem;">(e<sup>z</sup>−e<sup>-z</sup>) /
+              (e<sup>z</sup>+e<sup>-z</sup>)<br><span class="comment">→ -1 to 1 · zero-centred</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PART B: Backprop ── -->
+      <div style="margin-bottom:2.5rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+        <h3 style="color:var(--col-howit); margin-bottom:0.75rem; font-size:0.8rem; letter-spacing:0.12em;">PART B — HOW
+          IT LEARNS: BACKPROPAGATION</h3>
+        <p style="font-size:0.85rem; color:var(--text-mid); line-height:1.7; margin-bottom:1rem; max-width:600px;">
+          After a wrong prediction, the network works backwards through every connection asking: "how much did you
+          contribute to this mistake?" Then nudges each weight a small amount. Repeat that a million times.
+        </p>
+        <div class="two-col">
+          <div>
+            <canvas id="bp-canvas" width="440" height="320" style="border-radius:8px; display:block;"></canvas>
+            <div class="step-controls">
+              <button class="btn primary" id="bp-btn" onclick="nextBPStep()">▶ Forward pass</button>
+              <button class="btn" onclick="resetBP()">↺ Reset</button>
+              <span class="step-label" id="bp-step-label">step 0 / 4</span>
+            </div>
+          </div>
+          <div>
+            <div id="bp-explain" style="min-height:260px;">
+              <h3 id="bp-title">Ready</h3>
+              <div class="math-block" id="bp-math" style="font-size:0.8rem; min-height: 120px;">
+                <span class="comment">// Click Forward pass to begin</span><br>
+                <span class="comment">// Watching a single neuron learn: input x=1.0, target y=1</span>
+              </div>
+              <p id="bp-desc" style="font-size:0.82rem; color:var(--text-mid); line-height:1.7; margin-top:0.75rem;">
+                One neuron. Input x=1.0. Target output=1.0. Starting weight=0.4. Let's watch it learn.
+              </p>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" id="bp-progress" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="two-col" style="margin-top:1.25rem;">
+          <div class="info-card">
+            <h3>Loss function</h3>
+            <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6; margin-bottom:0.5rem;">
+              Measures how wrong the prediction is. Like a score you're trying to drive to zero.
+            </p>
+            <div class="math-block" style="font-size:0.8rem;">
+              L <span class="op">=</span> (ŷ <span class="op">-</span> y)²<br>
+              <span class="comment">// ŷ = predicted, y = actual</span>
+            </div>
+          </div>
+          <div class="info-card">
+            <h3>Gradient Descent</h3>
+            <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6; margin-bottom:0.5rem;">
+              Step in the direction that reduces the loss. Learning rate η controls how big a step.
+            </p>
+            <div class="math-block" style="font-size:0.8rem;">
+              w <span class="op">=</span> w <span class="op">-</span> η · <span class="op">∂</span>L/<span
+                class="op">∂</span>w<br>
+              <span class="comment">// repeat millions of times on millions of examples</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PART C: Deep Network ── -->
+      <div style="padding-top:1.5rem; border-top:1px solid var(--border);">
+        <h3 style="color:var(--col-howit); margin-bottom:0.75rem; font-size:0.8rem; letter-spacing:0.12em;">PART C —
+          SCALE: THE DEEP NETWORK</h3>
+        <p style="font-size:0.85rem; color:var(--text-mid); line-height:1.7; margin-bottom:1rem; max-width:600px;">
+          Stack neurons into layers. Each layer learns a progressively more abstract representation of the input.
+          While this is by design, nobody designs it explicitly.
+        </p>
+        <div class="canvas-wrap" style="margin-bottom:1.25rem;">
+          <div class="canvas-header">
+            <div class="dot dot-r"></div>
+            <div class="dot dot-y"></div>
+            <div class="dot dot-g"></div>
+            <span>deep_network.sim &nbsp;—&nbsp; fire a signal through layers</span>
+          </div>
+          <canvas id="net-canvas" width="920" height="320"></canvas>
+        </div>
+        <div class="step-controls" style="margin-top:0;">
+          <button class="btn primary" onclick="pulseNetwork()">▶ Fire signal</button>
+          <button class="btn" onclick="toggleNetLabels()">⊞ Toggle labels</button>
+        </div>
+        <div class="three-col" style="margin-top:1.25rem;">
+          <div class="info-card accent-border">
+            <h3>Input layer</h3>
+            <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6;">
+              Raw features. For a SocketCAN frame: message ID, DLC, the 8 payload bytes, timestamp delta, bus ID. Each
+              value = one neuron.
+            </p>
+          </div>
+          <div class="info-card accent3-border">
+            <h3>Hidden layers</h3>
+            <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6;">
+              We define it, final state is learnt over training. Layer 1 might learn byte-level patterns, layer 2
+              sequences, layer 3
+              protocol-level abstractions. Training decides.
+            </p>
+          </div>
+          <div class="info-card accent2-border">
+            <h3>Output layer</h3>
+            <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6;">
+              The final answer. Classification (fault / normal / unknown) or regression (predict next value). Softmax
+              turns it into probabilities.
+            </p>
+          </div>
+        </div>
+        <div style="margin-top:1.5rem;">
+          <h3>Loss goes down as training runs</h3>
+          <div class="canvas-wrap" style="margin-top:0.75rem;">
+            <div class="canvas-header">
+              <div class="dot dot-r"></div>
+              <div class="dot dot-y"></div>
+              <div class="dot dot-g"></div>
+              <span>training_loss.plot</span>
+            </div>
+            <canvas id="loss-canvas" width="920" height="180"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+     SECTION 4 — LLMs
+══════════════════════════════════════════════════════ -->
+  <section class="section" id="llm-section"
+    style="background: radial-gradient(ellipse 60% 40% at 80% 20%, rgba(192,132,252,0.05) 0%, transparent 60%), var(--bg);">
+    <div class="section-inner">
+      <div class="section-tag" style="color:var(--col-llm)">// 02 — what's new</div>
+      <h2>LLMs: <span class="highlight4">the same network, at a scale that changes everything</span></h2>
+      <p class="lead">Claude, GPT-4, Gemini — all the same architecture underneath. A deep network. What changed is the
+        data (text instead of labelled images), the scale (hundreds of billions of weights), and one key invention:
+        attention.</p>
+
+      <!-- Tokenizer demo -->
+      <div class="canvas-wrap" style="margin-bottom:1.25rem;">
+        <div class="canvas-header">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+          <span>tokenizer.demo &nbsp;—&nbsp; your text becomes numbers before the model sees it</span>
+        </div>
+        <div style="padding:1.25rem 1.5rem;">
+          <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6; margin-bottom:1rem;">
+            The model doesn't read words. It reads <strong style="color:var(--text)">tokens</strong> — subword pieces
+            chosen by a compression algorithm run before training. Common words stay whole. Rare or compound words get
+            split. This is why rare technical terms in your prompts often get fragmented — and why being specific still
+            beats being vague.
+          </p>
+          <div style="display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">
+            <button class="btn primary" onclick="tokenizeExample(0)">SocketCAN prompt</button>
+            <button class="btn" onclick="tokenizeExample(1)">Simple sentence</button>
+            <button class="btn" onclick="tokenizeExample(2)">C function signature</button>
+          </div>
+          <div id="token-input"
+            style="font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--text-mid); margin-bottom:0.75rem; line-height:1.6; min-height:40px;">
+          </div>
+          <div class="token-row token-colors" id="token-display"></div>
+          <div id="token-count"
+            style="font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--text-dim); margin-top:0.5rem;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Transformer overview -->
+      <h3 style="margin-bottom:0.75rem;">From tokens to answer — one transformer pass</h3>
+      <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6; margin-bottom:0.75rem; max-width:600px;">
+        This happens once per token generated. In a 200-token response, this pipeline runs 200 times.
+      </p>
+      <div class="flow-steps" id="transformer-flow">
+        <div class="flow-step" id="tf0">Tokens<small>text → integer IDs</small></div>
+        <div class="flow-step" id="tf1">Embeddings<small>ID → 4096-dim vector</small></div>
+        <div class="flow-step" id="tf2">Attention<small>which tokens matter?</small></div>
+        <div class="flow-step" id="tf3">FFN<small>transform each token</small></div>
+        <div class="flow-step" id="tf4">×96 layers<small>repeat deeply</small></div>
+        <div class="flow-step" id="tf5">Softmax<small>predict next token</small></div>
+      </div>
+      <div class="step-controls">
+        <button class="btn primary" onclick="animTransformer()">▶ Animate flow</button>
+      </div>
+
+      <!-- Attention canvas -->
+      <div style="margin-top:1.75rem;">
+        <h3 style="margin-bottom:0.5rem;">Attention — the part that makes transformers different</h3>
+        <p style="font-size:0.85rem; color:var(--text-mid); line-height:1.7; margin-bottom:1rem; max-width:620px;">
+          Before transformers, networks processed tokens in order — like reading one character at a time with no ability
+          to look back. Attention lets every token look at every other token simultaneously and decide how relevant each
+          one is. "CAN" can directly attend to "driver" and "Linux" in one step, regardless of distance.
+        </p>
+        <div class="two-col">
+          <div class="canvas-wrap">
+            <div class="canvas-header">
+              <div class="dot dot-r"></div>
+              <div class="dot dot-y"></div>
+              <div class="dot dot-g"></div>
+              <span>attention_heatmap.viz &nbsp;—&nbsp; hover a row</span>
+            </div>
+            <canvas id="attn-canvas" width="440" height="340"></canvas>
+          </div>
+          <div>
+            <div id="attn-explain"
+              style="font-size:0.82rem; color:var(--text-dim); line-height:1.6; font-family:'JetBrains Mono',monospace; background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:0.75rem 1rem; margin-bottom:1rem; min-height:60px; transition:color 0.2s;">
+              Hover a row to see what that token attends to — and why.
+            </div>
+            <div class="info-card accent4-border">
+              <h3>What this means for you</h3>
+              <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6;">
+                "CAN" and "FD" attend strongly to each other because the model has seen "CAN FD" as a compound concept
+                billions of times in training.
+                Your entire prompt is processed this way — all tokens attending to all others simultaneously.
+                This is why <strong style="color:var(--text)">a richer, more specific prompt gives the model more signal
+                  to attend to</strong>, not more noise to filter through.
+              </p>
+            </div>
+            <div class="info-card" style="margin-top:1rem; border-color:var(--border);">
+              <h3>The honest framing</h3>
+              <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6;">
+                The model doesn't understand your code the way you do. It has learned
+                <em>statistical co-occurrence patterns</em> across trillions of tokens of code, docs, specs and
+                discussion.
+                It is an extremely powerful pattern completer. That's not a limitation — it's the mechanism.
+                Knowing this is how you use it better.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scale comparison -->
+      <div class="three-col" style="margin-top:1.75rem;">
+        <div class="info-card">
+          <h3 style="color:var(--col-howit)">Demo network (above)</h3>
+          <div class="math-block" style="font-size:0.75rem;">
+            <span class="comment">parameters: ~50</span><br>
+            <span class="comment">layers: 3</span><br>
+            <span class="comment">training: seconds on CPU</span><br>
+            <span class="comment">purpose: simple DNNs</span>
+          </div>
+        </div>
+        <div class="info-card">
+          <h3 style="color:var(--col-foundation)">GPT-2</h3>
+          <div class="math-block" style="font-size:0.75rem;">
+            <span class="comment">parameters: 1.5B</span><br>
+            <span class="comment">layers: 48</span><br>
+            <span class="comment">training: weeks on GPUs</span><br>
+            <span class="comment">purpose: coherent language</span>
+          </div>
+        </div>
+        <div class="info-card">
+          <h3 style="color:var(--col-llm)">Claude / GPT-4 class</h3>
+          <div class="math-block" style="font-size:0.75rem;">
+            <span class="comment">parameters: ~100B+</span><br>
+            <span class="comment">layers: 100+</span><br>
+            <span class="comment">training: months, 10k+ GPUs</span><br>
+            <span class="comment">purpose: general reasoning</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+     SECTION 5 — USING IT BETTER
+══════════════════════════════════════════════════════ -->
+  <section class="section" id="usage-section"
+    style="background: radial-gradient(ellipse 60% 40% at 20% 20%, rgba(255,107,53,0.04) 0%, transparent 60%), var(--bg);">
+    <div class="section-inner">
+      <div class="section-tag" style="color:var(--col-usage)">// 03 — putting it to work</div>
+      <h2>Using it <span class="highlight2">better</span></h2>
+      <p class="lead">Everything that follows is drawn from using these tools on actual SocketCAN driver work. The
+        patterns that actually changed the output quality, or at least it seemed it did.</p>
+
+      <!-- Tool comparison -->
+      <h3 style="margin-bottom:0.75rem;">First: pick the right tool for the task</h3>
+      <p style="font-size:0.82rem; color:var(--text-mid); line-height:1.6; margin-bottom:0.75rem; max-width:640px;">
+        These tools all run LLMs under the hood. The real differences are context window size, how they integrate into
+        your workflow, and how much autonomy they're given. Difference can be significant.
+      </p>
+
+      <table class="tool-table">
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>Model</th>
+            <th>Where it lives</th>
+            <th>Context</th>
+            <th>Best use in embedded/CAN work</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>GitHub Copilot</strong></td>
+            <td><span class="badge badge-green">GPT-5 / Claude / Gemini (picker)</span></td>
+            <td>VSCode, JetBrains, CLI, web</td>
+            <td>64k–128k tokens</td>
+            <td>
+              <span class="badge badge-cyan">Chat</span>
+              <span class="badge badge-cyan">agent</span>
+              <span class="badge badge-cyan">boilerplate</span><br>
+              <small style="color:var(--text-dim)">struct definitions, ioctl patterns, register macros. Fast, low
+                friction. Model picker lets you swap to Claude or GPT-5 per task.</small>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Cursor</strong></td>
+            <td><span class="badge badge-purple">Claude / GPT / Gemini / DeepSeek (picker)</span></td>
+            <td>Full IDE (VSCode fork)</td>
+            <td>up to 200k tokens (effective less)</td>
+            <td>
+              <span class="badge badge-purple">refactor</span>
+              <span class="badge badge-cyan">codebase-aware</span><br>
+              <small style="color:var(--text-dim)">Reads your entire driver tree. "How does my CAN filter work?" and it
+                actually knows. Background agents for longer autonomous tasks.</small>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Claude (claude.ai)</strong></td>
+            <td><span class="badge badge-orange">Claude Sonnet / Opus</span></td>
+            <td>Chat / browser / desktop</td>
+            <td>~200k tokens</td>
+            <td>
+              <span class="badge badge-orange">design review</span>
+              <span class="badge badge-orange">deep debugging</span><br>
+              <small style="color:var(--text-dim)">Paste entire .c files. Strong on SocketCAN API questions, kernel
+                patch review, architecture.</small>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Claude Code</strong></td>
+            <td><span class="badge badge-orange">Claude Sonnet / Opus</span></td>
+            <td>Terminal + desktop app</td>
+            <td>up to 1M tokens</td>
+            <td>
+              <span class="badge badge-green">autonomous</span>
+              <span class="badge badge-orange">multi-file edits</span><br>
+              <small style="color:var(--text-dim)">Runs bash, edits files, cross-compiles. "Add CANFD BRS support to
+                this driver" — it does it. Parallel sub-agents for larger tasks.</small>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>OpenAI Codex</strong></td>
+            <td><span class="badge badge-green">GPT-5.x-Codex series</span></td>
+            <td>CLI, desktop app, web, IDEs</td>
+            <td>~192k tokens</td>
+            <td>
+              <span class="badge badge-cyan">code gen</span>
+              <span class="badge badge-cyan">test harness gen</span><br>
+              <small style="color:var(--text-dim)">Solid at generating kunit test scaffolding for protocol state
+                logic. Parallel cloud sandboxes per task.</small>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Usage patterns -->
+      <h3 style="margin-top:2rem; margin-bottom:1rem;">Patterns that actually change the output</h3>
+
+      <!-- Pattern 1: Context block -->
+      <div class="pattern-card">
+        <h3>1. Give it a project context block</h3>
+        <p style="font-size:0.83rem; color:var(--text-mid); line-height:1.7; margin-bottom:0.75rem;">
+          The model doesn't know your toolchain, your kernel version, your hardware, or your team's conventions unless
+          you tell it. A context block pasted at the start of a session pays for itself in the first response. Write it
+          once, save it somewhere, paste it in.
+        </p>
+        <div class="can-example" style="border-left-color:var(--col-foundation);">
+          <span class="comment">// Project context — paste this at the start of any session</span><br>
+          Target: ARM Cortex-A53, Linux 6.1, Yocto<br>
+          Hardware: TJA1042 transceiver on SPI, dual CAN bus (can0 / can1)<br>
+          Stack: SocketCAN, socket(AF_CAN, SOCK_RAW, CAN_RAW)<br>
+          Frame type: CANFD with BRS enabled, 64-byte payload<br>
+          Conventions: kernel coding style, no dynamic alloc in ISR paths<br>
+          Build: cross-compile aarch64-linux-gnu-gcc, -Wall -Wextra clean
+        </div>
+        <p style="font-size:0.78rem; color:var(--text-dim); line-height:1.6; margin-top:0.5rem;">
+          Every answer that follows is now grounded in your actual environment. Without this, the model interpolates
+          from the average of all Linux driver code it has seen — which might be kernel 5.4 on x86.
+        </p>
+      </div>
+
+      <!-- Pattern 2: Specificity -->
+      <div class="pattern-card">
+        <h3>2. Front-load what matters, cut filler</h3>
+        <p style="font-size:0.83rem; color:var(--text-mid); line-height:1.7; margin-bottom:0.75rem;">
+          Remember: the model is doing weighted attention over your tokens. Filler words dilute the signal. Nouns and
+          verbs — especially domain-specific ones — carry the weight. You don't have to write like a "caveman", but you
+          do
+          want the high-information tokens early.
+        </p>
+        <div class="pattern-vs">
+          <div>
+            <div class="prompt-label" style="color:#ff5f57;">❌ generic output</div>
+            <div class="can-example prompt-bad">
+              <span class="str">"could you help me write a CAN driver please"</span>
+            </div>
+          </div>
+          <div class="pattern-vs-divider">vs</div>
+          <div>
+            <div class="prompt-label" style="color:var(--col-foundation);">✅ actionable output</div>
+            <div class="can-example prompt-good" style="border-left-color:var(--col-foundation);">
+              <span class="str">"SocketCAN CANFD driver, Linux 6.1, TJA1042 SPI transceiver, ARM Cortex-A53.
+                can_rx_handler() drops frames above 8 bytes. [paste code]. Root cause and fix."</span>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:0.78rem; color:var(--text-dim); line-height:1.6; margin-top:0.5rem;">
+          Second prompt gives the model hardware, kernel version, exact symptom, and code. The attention mechanism has
+          real signal to work with. Output is precise.
+        </p>
+      </div>
+
+      <!-- Pattern 3: Wrong answer to correct -->
+      <div class="pattern-card">
+        <h3>3. Give it something wrong to fix, not a blank canvas</h3>
+        <p style="font-size:0.83rem; color:var(--text-mid); line-height:1.7; margin-bottom:0.75rem;">
+          Asking for code from scratch produces average code. Giving the model a flawed implementation and asking it to
+          fix it produces better output — it has something concrete to reason against. This works especially well for
+          ISR safety and error paths.
+        </p>
+        <div class="can-example" style="border-left-color:var(--col-foundation);">
+          <span class="comment">// Instead of "write me a safe CAN ISR"</span><br>
+          <span class="str">"This ISR has a race condition in the flag handling. Here's the code: [paste]. Find it and
+            fix it. Use the appropriate kernel synchronisation primitive for this context."</span>
+        </div>
+      </div>
+
+      <!-- Pattern 4: Chain of thought -->
+      <div class="pattern-card">
+        <h3>4. Ask it to reason before it answers</h3>
+        <p style="font-size:0.83rem; color:var(--text-mid); line-height:1.7; margin-bottom:0.75rem;">
+          For multi-step debugging and architecture questions, adding "think through this step by step" measurably
+          improves correctness. For simple codegen it adds noise — use it when the problem has hidden steps.
+        </p>
+        <div class="can-example" style="border-left-color:var(--col-foundation);">
+          <span class="str">"The bitrate timing values in this CANFD setup look wrong but it compiles. Think through the
+            calculation step by step — nominal 500kbit/s, data 2Mbit/s, 80MHz clock — then tell me where the error
+            is."</span>
+        </div>
+      </div>
+
+      <!-- Pattern 5: Ask about what's missing -->
+      <div class="pattern-card">
+        <h3>5. Ask separately "what am I missing?"</h3>
+        <p style="font-size:0.83rem; color:var(--text-mid); line-height:1.7; margin-bottom:0.75rem;">
+          Codegen skews optimistic — it produces the happy path well. Error handling, edge cases, and resource cleanup
+          are almost always underspecified unless you ask for them explicitly. Make it a habit to follow every
+          implementation with a second prompt.
+        </p>
+        <div class="can-example" style="border-left-color:var(--col-foundation);">
+          <span class="str">"What error paths or edge cases did you not handle in that implementation? List them. Then
+            fix them."</span>
+        </div>
+        <p style="font-size:0.78rem; color:var(--text-dim); line-height:1.6; margin-top:0.5rem;">
+          You will almost always get at least two things the first pass missed — null pointer handling, missing error
+          returns, unhandled -EAGAIN from socket ops.
+        </p>
+      </div>
+
+      <!-- Pattern 6: TDD style -->
+      <div class="pattern-card">
+        <h3>6. Ask for the test before the code</h3>
+        <p style="font-size:0.83rem; color:var(--text-mid); line-height:1.7; margin-bottom:0.75rem;">
+          Describe the behaviour you want. Ask for a kunit test or a user-space mock first. Then ask for the
+          implementation that passes it. This forces the model to make the spec concrete before generating, which
+          surfaces ambiguities early.
+        </p>
+        <div class="can-example" style="border-left-color:var(--col-foundation);">
+          <span class="str">"Write a kunit test for a CAN filter function that should: accept standard 11-bit frames
+            matching mask 0x7FF, reject extended 29-bit frames, handle zero-length DLC correctly. Then write the
+            implementation that passes it."</span>
+        </div>
+      </div>
+
+      <!-- 3 evaluation questions -->
+      <h3 style="margin-top:2rem; margin-bottom:0.75rem;">When evaluating a new tool — three questions</h3>
+      <div class="three-col">
+        <div class="info-card" style="border-color:var(--col-howit);">
+          <div style="font-size:1.4rem; margin-bottom:0.5rem;">🔍</div>
+          <h3 style="color:var(--col-howit);">Does it know the domain?</h3>
+          <!-- <p style="font-size:0.8rem; color:var(--text-mid); line-height:1.6;">
+            Ask it: what is <code style="color:var(--accent)">struct canfd_frame</code> and how does it differ from
+            <code style="color:var(--accent)">struct can_frame</code>?
+            If it confuses them or makes up fields, you've learned something.
+          </p> -->
+        </div>
+        <div class="info-card" style="border-color:var(--col-usage);">
+          <div style="font-size:1.4rem; margin-bottom:0.5rem;">⚡</div>
+          <h3 style="color:var(--col-usage);">Does it fit your workflow?</h3>
+          <!-- <p style="font-size:0.8rem; color:var(--text-mid); line-height:1.6;">
+            A tool that breaks your flow gets abandoned in week 2. If you live in vim + terminal, Claude Code. If you're
+            in VSCode, Cursor or Copilot. The best tool is the one you actually use.
+          </p> -->
+        </div>
+        <div class="info-card" style="border-color:var(--col-foundation);">
+          <div style="font-size:1.4rem; margin-bottom:0.5rem;">🛡️</div>
+          <h3 style="color:var(--col-foundation);">Can you verify what it produces?</h3>
+          <!-- <p style="font-size:0.8rem; color:var(--text-mid); line-height:1.6;">
+            Think of it as a senior pair programmer who is sometimes confidently wrong.
+            You still own the review. If the code runs on hardware you didn't write, that's the risk.
+          </p> -->
+        </div>
+      </div>
+
+      <!-- Closing mental model -->
+      <div class="info-card" style="margin-top:2rem; border-color:var(--col-usage); background:rgba(255,107,53,0.03);">
+        <h3 style="color:var(--col-usage)">Mental model</h3>
+        <p style="font-size:0.9rem; color:var(--text); line-height:1.75; margin-top:0.5rem;">
+          This model has read everything on the internet, It does not think. It predicts the most statistically likely
+          next token given everything in its context
+          window.
+          The richer, more specific, more grounded your context — the more that prediction looks like what an expert
+          would hopefully write.
+          <strong style="color:var(--col-usage)">Context quality is the lever. Everything else is technique.</strong>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scroll hint -->
+  <div class="scroll-hint">scroll ↓</div>
+
+  <!-- ══ SCRIPTS ══ -->
+  <script>
+    // ─────────────────────────────────────────────
+    // UTILITIES
+    // ─────────────────────────────────────────────
+    function scrollToSection(id) {
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Nav active state on scroll — sections defined after FA init
+    window.addEventListener('scroll', () => {
+      const navSteps = document.querySelectorAll('.nav-step');
+      const sIds = ['hero', 'fn-approx', 'crash-course', 'llm-section', 'usage-section'];
+      let current = 0;
+      sIds.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el && window.scrollY >= el.offsetTop - 120) current = i;
+      });
+      navSteps.forEach((s, i) => s.classList.toggle('active', i === current));
+      document.querySelector('.scroll-hint').style.opacity = window.scrollY > 200 ? '0' : '1';
+    });
+    // scroll spy: see updated listener above
+
+    function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    // ─────────────────────────────────────────────
+    // SECTION 2 — NEURON CANVAS
+    // ─────────────────────────────────────────────
+    const nc = document.getElementById('neuron-canvas');
+    const nctx = nc.getContext('2d');
+    let nx1 = 0.8, nx2 = 0.5, nw1 = 0.6, nw2 = -0.3, nb = 0.1;
+    let nAnimProgress = 0;
+    let nAnimRunning = false;
+
+    function drawNeuron(animP) {
+      const W = nc.width, H = nc.height;
+      nctx.clearRect(0, 0, W, H);
+      nctx.fillStyle = '#111318';
+      nctx.fillRect(0, 0, W, H);
+
+      const inp1 = { x: 60, y: 100 };
+      const inp2 = { x: 60, y: 200 };
+      const body = { x: 240, y: 150, r: 38 };
+      const out = { x: 390, y: 150 };
+
+      const z = nw1 * nx1 + nw2 * nx2 + nb;
+      const outVal = sigmoid(z);
+
+      // Wires
+      function drawWire(from, to, weight, progress) {
+        const isPos = weight >= 0;
+        const col = isPos ? '#a8ff3e' : '#ff6b35';
+        nctx.save();
+        nctx.beginPath();
+        nctx.moveTo(from.x, from.y);
+        const midX = from.x + (to.x - from.x) * progress;
+        const midY = from.y + (to.y - from.y) * progress;
+        if (progress >= 1) nctx.lineTo(to.x, to.y);
+        else nctx.lineTo(midX, midY);
+        nctx.strokeStyle = col;
+        nctx.lineWidth = Math.abs(weight) * 3 + 1;
+        nctx.globalAlpha = 0.5 + progress * 0.4;
+        nctx.stroke();
+        // weight label
+        if (progress > 0.5) {
+          const lx = (from.x + to.x) / 2;
+          const ly = (from.y + to.y) / 2 - 10;
+          nctx.globalAlpha = Math.min(1, (progress - 0.5) * 2);
+          nctx.font = '600 11px JetBrains Mono, monospace';
+          nctx.fillStyle = col;
+          nctx.textAlign = 'center';
+          nctx.fillText((weight >= 0 ? '+' : '') + weight.toFixed(1), lx, ly);
+        }
+        nctx.restore();
+      }
+
+      const p1 = Math.min(1, animP * 2);
+      const p2 = Math.min(1, Math.max(0, animP * 2 - 0.3));
+      drawWire(inp1, { x: body.x - body.r, y: body.y }, nw1, p1);
+      drawWire(inp2, { x: body.x - body.r, y: body.y }, nw2, p2);
+
+      // Output wire
+      if (animP > 0.7) {
+        const p3 = (animP - 0.7) / 0.3;
+        nctx.beginPath();
+        nctx.moveTo(body.x + body.r, body.y);
+        nctx.lineTo(body.x + body.r + (out.x - body.x - body.r) * p3, body.y);
+        nctx.strokeStyle = '#00e5ff';
+        nctx.lineWidth = 2.5;
+        nctx.globalAlpha = 0.8;
+        nctx.stroke();
+        nctx.globalAlpha = 1;
+      }
+
+      // Input nodes
+      function drawNode(cx, cy, val, label) {
+        nctx.beginPath();
+        nctx.arc(cx, cy, 22, 0, Math.PI * 2);
+        nctx.fillStyle = '#181c24';
+        nctx.fill();
+        nctx.strokeStyle = '#00e5ff';
+        nctx.lineWidth = 1.5;
+        nctx.stroke();
+        nctx.fillStyle = '#e8eaf0';
+        nctx.font = '600 12px JetBrains Mono, monospace';
+        nctx.textAlign = 'center';
+        nctx.textBaseline = 'middle';
+        nctx.fillText(val.toFixed(1), cx, cy);
+        nctx.fillStyle = '#6b7280';
+        nctx.font = '10px JetBrains Mono, monospace';
+        nctx.fillText(label, cx, cy + 34);
+      }
+      drawNode(inp1.x, inp1.y, nx1, 'x₁');
+      drawNode(inp2.x, inp2.y, nx2, 'x₂');
+
+      // Neuron body
+      const glow = nctx.createRadialGradient(body.x, body.y, 0, body.x, body.y, body.r);
+      const activation = animP > 0.5 ? Math.min(1, (animP - 0.5) / 0.5) : 0;
+      glow.addColorStop(0, `rgba(0,229,255,${0.1 + activation * 0.3})`);
+      glow.addColorStop(1, '#181c24');
+      nctx.beginPath();
+      nctx.arc(body.x, body.y, body.r, 0, Math.PI * 2);
+      nctx.fillStyle = glow;
+      nctx.fill();
+      nctx.strokeStyle = `rgba(0,229,255,${0.3 + activation * 0.7})`;
+      nctx.lineWidth = 2;
+      nctx.stroke();
+      nctx.fillStyle = '#e8eaf0';
+      nctx.font = '600 11px JetBrains Mono, monospace';
+      nctx.textAlign = 'center';
+      nctx.textBaseline = 'middle';
+      nctx.fillText('σ(z)', body.x, body.y - 8);
+      if (activation > 0) {
+        nctx.fillStyle = '#00e5ff';
+        nctx.font = '700 13px JetBrains Mono, monospace';
+        nctx.fillText(outVal.toFixed(3), body.x, body.y + 12);
+      }
+
+      // Output node
+      if (animP > 0.7) {
+        const p3 = (animP - 0.7) / 0.3;
+        nctx.globalAlpha = p3;
+        nctx.beginPath();
+        nctx.arc(out.x, out.y, 22, 0, Math.PI * 2);
+        nctx.fillStyle = '#181c24';
+        nctx.fill();
+        nctx.strokeStyle = '#00e5ff';
+        nctx.lineWidth = 2;
+        nctx.stroke();
+        nctx.fillStyle = '#00e5ff';
+        nctx.font = '700 11px JetBrains Mono, monospace';
+        nctx.textAlign = 'center';
+        nctx.textBaseline = 'middle';
+        nctx.fillText(outVal.toFixed(2), out.x, out.y);
+        nctx.fillStyle = '#6b7280';
+        nctx.font = '10px JetBrains Mono, monospace';
+        nctx.fillText('out', out.x, out.y + 34);
+        nctx.globalAlpha = 1;
+      }
+
+      // Bias label
+      if (animP > 0.3) {
+        nctx.fillStyle = '#6b7280';
+        nctx.font = '10px JetBrains Mono, monospace';
+        nctx.textAlign = 'center';
+        nctx.fillText(`b=${nb.toFixed(1)}`, body.x, body.y + body.r + 16);
+      }
+    }
+
+    function updateNeuronMath() {
+      const z = nw1 * nx1 + nw2 * nx2 + nb;
+      const outVal = sigmoid(z);
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      set('m-x1', nx1.toFixed(1));
+      set('m-x2', nx2.toFixed(1));
+      set('m-w1', nw1.toFixed(1));
+      set('m-w2', nw2.toFixed(1));
+      set('m-b', nb.toFixed(1));
+      set('m-z', String((nw1 * nx1).toFixed(2) + '+(' + (nw2 * nx2).toFixed(2) + ')+' + nb.toFixed(1)));
+      set('m-zval', z.toFixed(2));
+      set('m-zval2', z.toFixed(2));
+      set('m-out', outVal.toFixed(3));
+    }
+
+    function animNeuron() {
+      if (nAnimRunning) return;
+      nAnimRunning = true;
+      nAnimProgress = 0;
+      function step() {
+        nAnimProgress += 0.018;
+        drawNeuron(Math.min(1, nAnimProgress));
+        if (nAnimProgress < 1) requestAnimationFrame(step);
+        else nAnimRunning = false;
+      }
+      requestAnimationFrame(step);
+    }
+
+    function randomizeNeuron() {
+      nx1 = +(Math.random().toFixed(1));
+      nx2 = +(Math.random().toFixed(1));
+      nw1 = +((Math.random() * 2 - 1).toFixed(1));
+      nw2 = +((Math.random() * 2 - 1).toFixed(1));
+      nb = +((Math.random() * 0.4 - 0.2).toFixed(1));
+      updateNeuronMath();
+      drawNeuron(0);
+      animNeuron();
+    }
+
+    updateNeuronMath();
+    drawNeuron(0);
+
+    // ─────────────────────────────────────────────
+    // SECTION 3 — BACKPROP
+    // ─────────────────────────────────────────────
+    const bpc = document.getElementById('bp-canvas');
+    const bpctx = bpc.getContext('2d');
+    let bpStep = 0;
+    let bpW = 0.4, bpB = 0.0, bpX = 1.0, bpTarget = 1.0, bpLR = 0.5;
+    let bpPred = 0, bpLoss = 0, bpGradW = 0, bpGradB = 0;
+    const bpSteps = [
+      {
+        title: 'Forward Pass',
+        progress: 25,
+        btnText: '▶ Compute loss',
+        math: () => {
+          bpPred = sigmoid(bpW * bpX + bpB);
+          return `<span class="comment">// Forward: compute prediction</span>
+z = w·x + b = ${bpW.toFixed(2)}·${bpX} + ${bpB.toFixed(2)} = ${(bpW * bpX + bpB).toFixed(3)}
+ŷ = σ(z) = <span class="result">${bpPred.toFixed(4)}</span>
+<span class="comment">// target y = 1.0</span>`;
+        },
+        desc: 'Input flows forward through the neuron. We get a prediction ŷ. Now we need to know how wrong it is.',
+        drawPhase: 'forward'
+      },
+      {
+        title: 'Compute Loss',
+        progress: 50,
+        btnText: '▶ Backpropagate',
+        math: () => {
+          bpPred = sigmoid(bpW * bpX + bpB);
+          bpLoss = Math.pow(bpPred - bpTarget, 2);
+          return `<span class="comment">// Loss: MSE = (ŷ - y)²</span>
+L = (${bpPred.toFixed(3)} - 1.0)² = <span class="result">${bpLoss.toFixed(4)}</span>
+
+<span class="comment">// The number we want to minimize.</span>
+<span class="comment">// A perfect prediction → L = 0</span>`;
+        },
+        desc: 'The loss is how wrong we are — squared, so it\'s always positive and penalizes big mistakes more.',
+        drawPhase: 'loss'
+      },
+      {
+        title: 'Backward Pass (gradients)',
+        progress: 75,
+        btnText: '▶ Update weights',
+        math: () => {
+          bpPred = sigmoid(bpW * bpX + bpB);
+          const dL_dypred = 2 * (bpPred - bpTarget);
+          const dypred_dz = bpPred * (1 - bpPred);
+          bpGradW = dL_dypred * dypred_dz * bpX;
+          bpGradB = dL_dypred * dypred_dz;
+          return `<span class="comment">// Chain rule: how much did w contribute to L?</span>
+∂L/∂ŷ = 2(ŷ - y) = <span class="val">${dL_dypred.toFixed(4)}</span>
+∂ŷ/∂z = ŷ(1 - ŷ) = <span class="val">${dypred_dz.toFixed(4)}</span>
+∂z/∂w = x = <span class="val">${bpX}</span>
+
+∂L/∂w = <span class="result">${bpGradW.toFixed(4)}</span>
+∂L/∂b = <span class="result">${bpGradB.toFixed(4)}</span>`;
+        },
+        desc: 'Chain rule applies at each step. Each weight gets a gradient — the direction that increases loss. We\'ll go the opposite way.',
+        drawPhase: 'backward'
+      },
+      {
+        title: 'Weight Update',
+        progress: 100,
+        btnText: '↺ Reset & repeat',
+        math: () => {
+          const oldW = bpW, oldB = bpB;
+          bpW = +(bpW - bpLR * bpGradW).toFixed(4);
+          bpB = +(bpB - bpLR * bpGradB).toFixed(4);
+          const newPred = sigmoid(bpW * bpX + bpB);
+          const newLoss = Math.pow(newPred - bpTarget, 2);
+          return `<span class="comment">// Gradient descent: w = w - η·∂L/∂w  (η=${bpLR})</span>
+w: ${oldW.toFixed(4)} → <span class="result">${bpW.toFixed(4)}</span>
+b: ${oldB.toFixed(4)} → <span class="result">${bpB.toFixed(4)}</span>
+
+<span class="comment">// New prediction after update:</span>
+ŷ_new = <span class="result">${newPred.toFixed(4)}</span>
+L_new  = <span class="result">${newLoss.toFixed(4)}</span> <span class="comment">// improved!</span>`;
+        },
+        desc: 'Weights updated! The prediction improved. Real training does this millions of times on millions of examples.',
+        drawPhase: 'update'
+      }
+    ];
+
+    function drawBP(phase) {
+      const W = bpc.width, H = bpc.height;
+      bpctx.clearRect(0, 0, W, H);
+      bpctx.fillStyle = '#111318';
+      bpctx.fillRect(0, 0, W, H);
+
+      const inp = { x: 60, y: 160 };
+      const neu = { x: 220, y: 160, r: 36 };
+      const out = { x: 380, y: 160 };
+      const loss = { x: 380, y: 80 };
+
+      // Forward arrow
+      const fwdCol = phase === 'forward' ? '#00e5ff' : (phase === 'backward' ? '#ff6b35' : '#2a3040');
+      bpctx.beginPath();
+      bpctx.moveTo(inp.x + 22, inp.y);
+      bpctx.lineTo(neu.x - neu.r, neu.y);
+      bpctx.strokeStyle = fwdCol;
+      bpctx.lineWidth = 2.5;
+      bpctx.stroke();
+      // Arrow head
+      if (phase === 'forward') {
+        drawArrow(bpctx, neu.x - neu.r - 12, neu.y, neu.x - neu.r, neu.y, '#00e5ff');
+      }
+
+      // Output arrow  
+      const outCol = (phase === 'forward' || phase === 'loss') ? '#00e5ff' : (phase === 'backward' ? '#ff6b35' : '#2a3040');
+      bpctx.beginPath();
+      bpctx.moveTo(neu.x + neu.r, neu.y);
+      bpctx.lineTo(out.x - 22, out.y);
+      bpctx.strokeStyle = outCol;
+      bpctx.lineWidth = 2.5;
+      bpctx.stroke();
+
+      // Loss arrow up
+      if (phase === 'loss' || phase === 'backward') {
+        bpctx.beginPath();
+        bpctx.moveTo(out.x, out.y - 22);
+        bpctx.lineTo(loss.x, loss.y + 20);
+        bpctx.strokeStyle = '#febc2e';
+        bpctx.lineWidth = 2;
+        bpctx.setLineDash([4, 3]);
+        bpctx.stroke();
+        bpctx.setLineDash([]);
+      }
+
+      // Backprop arrow
+      if (phase === 'backward' || phase === 'update') {
+        bpctx.beginPath();
+        bpctx.moveTo(neu.x + neu.r + 20, neu.y - 20);
+        const cx1 = neu.x + 80, cy1 = neu.y - 60;
+        const cx2 = neu.x + 20, cy2 = neu.y - 60;
+        bpctx.bezierCurveTo(cx1, cy1, cx2, cy2, neu.x - 20, neu.y - neu.r);
+        bpctx.strokeStyle = '#ff6b35';
+        bpctx.lineWidth = 2;
+        bpctx.stroke();
+        drawArrow(bpctx, neu.x - 15, neu.y - neu.r - 6, neu.x - 20, neu.y - neu.r, '#ff6b35');
+        bpctx.fillStyle = '#ff6b35';
+        bpctx.font = '600 10px JetBrains Mono, monospace';
+        bpctx.textAlign = 'center';
+        bpctx.fillText('∂L/∂w', neu.x + 50, neu.y - 68);
+      }
+
+      // Input node
+      drawCircleNode(bpctx, inp.x, inp.y, 22, '#181c24', '#6b7280', `x=${bpX}`, 'input');
+      // Neuron
+      const neuGlow = phase === 'update' ? 'rgba(168,255,62,0.3)' : 'rgba(0,229,255,0.15)';
+      const neuBorder = phase === 'update' ? '#a8ff3e' : '#00e5ff';
+      drawCircleNode(bpctx, neu.x, neu.y, neu.r, `radial-gradient to ${neuGlow}`, neuBorder, 'σ', '', true, neuGlow);
+      // Output node
+      const predVal = sigmoid(bpW * bpX + bpB);
+      drawCircleNode(bpctx, out.x, out.y, 22, '#181c24', '#00e5ff', predVal.toFixed(3), 'ŷ');
+      // Loss node
+      if (phase === 'loss' || phase === 'backward' || phase === 'update') {
+        drawCircleNode(bpctx, loss.x, loss.y, 22, '#1a1400', '#febc2e', 'L', 'loss');
+      }
+
+      // Iteration counter
+      bpctx.fillStyle = '#6b7280';
+      bpctx.font = '10px JetBrains Mono, monospace';
+      bpctx.textAlign = 'right';
+      bpctx.fillText(`w=${bpW.toFixed(3)}  b=${bpB.toFixed(3)}`, W - 16, H - 12);
+    }
+
+    function drawArrow(ctx, x1, y1, x2, y2, color) {
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 8 * Math.cos(angle - 0.4), y2 - 8 * Math.sin(angle - 0.4));
+      ctx.lineTo(x2 - 8 * Math.cos(angle + 0.4), y2 - 8 * Math.sin(angle + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawCircleNode(ctx, cx, cy, r, bg, border, label, sublabel, bigNode, glowColor) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      if (glowColor) {
+        ctx.fillStyle = '#181c24';
+        ctx.fill();
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 20;
+      } else {
+        ctx.fillStyle = bg;
+        ctx.fill();
+      }
+      ctx.strokeStyle = border;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#e8eaf0';
+      ctx.font = `600 ${bigNode ? 13 : 11}px JetBrains Mono, monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, cx, cy);
+      if (sublabel) {
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '9px JetBrains Mono, monospace';
+        ctx.fillText(sublabel, cx, cy + r + 14);
+      }
+    }
+
+    function nextBPStep() {
+      if (bpStep >= bpSteps.length) { resetBP(); return; }
+      const s = bpSteps[bpStep];
+      document.getElementById('bp-title').textContent = s.title;
+      document.getElementById('bp-math').innerHTML = s.math();
+      document.getElementById('bp-desc').textContent = s.desc;
+      document.getElementById('bp-progress').style.width = s.progress + '%';
+      document.getElementById('bp-step-label').textContent = `step ${bpStep + 1} / ${bpSteps.length}`;
+      const btn = document.getElementById('bp-btn');
+      btn.textContent = s.btnText;
+      drawBP(s.drawPhase);
+      bpStep++;
+      if (bpStep >= bpSteps.length) btn.textContent = '↺ Reset & repeat';
+    }
+
+    function resetBP() {
+      bpStep = 0;
+      bpW = 0.4; bpB = 0.0;
+      document.getElementById('bp-title').textContent = 'Ready';
+      document.getElementById('bp-math').innerHTML = '<span class="comment">// Click Forward pass to begin</span>\n<span class="comment">// We\'ll train: given x=1.0, predict y=1</span>';
+      document.getElementById('bp-desc').textContent = 'We have a tiny 1-neuron network. Input x=1.0, target output=1.0. Let\'s watch it learn.';
+      document.getElementById('bp-progress').style.width = '0%';
+      document.getElementById('bp-step-label').textContent = 'step 0 / 4';
+      document.getElementById('bp-btn').textContent = '▶ Forward pass';
+      drawBP('idle');
+    }
+
+    drawBP('idle');
+
+    // ─────────────────────────────────────────────
+    // SECTION 4 — DEEP NETWORK
+    // ─────────────────────────────────────────────
+    const netc = document.getElementById('net-canvas');
+    const netctx = netc.getContext('2d');
+    let showLabels = true;
+    let netAnimFrame = null;
+
+    const layers = [
+      { name: 'Input', nodes: 4, color: '#00e5ff', labels: ['signal_1', 'signal_2', 'timest.', 'msg_id'] },
+      { name: 'Hidden 1', nodes: 6, color: '#6b9fff', labels: Array(6).fill('') },
+      { name: 'Hidden 2', nodes: 6, color: '#a8ff3e', labels: Array(6).fill('') },
+      { name: 'Hidden 3', nodes: 5, color: '#c084fc', labels: Array(5).fill('') },
+      { name: 'Output', nodes: 3, color: '#ff6b35', labels: ['class_A', 'class_B', 'class_C'] }
+    ];
+
+    let activations = layers.map(l => Array(l.nodes).fill(0));
+
+    function getNodePos(lIdx, nIdx) {
+      const W = netc.width, H = netc.height;
+      const lx = 60 + lIdx * ((W - 80) / (layers.length - 1));
+      const count = layers[lIdx].nodes;
+      const spacing = Math.min(54, (H - 60) / (count - 1 || 1));
+      const totalH = spacing * (count - 1);
+      const startY = H / 2 - totalH / 2;
+      return { x: lx, y: startY + nIdx * spacing };
+    }
+
+    function drawNetwork(pulse) {
+      const W = netc.width, H = netc.height;
+      netctx.clearRect(0, 0, W, H);
+      netctx.fillStyle = '#111318';
+      netctx.fillRect(0, 0, W, H);
+
+      // Connections
+      for (let l = 0; l < layers.length - 1; l++) {
+        for (let n = 0; n < layers[l].nodes; n++) {
+          for (let m = 0; m < layers[l + 1].nodes; m++) {
+            const a = getNodePos(l, n);
+            const b = getNodePos(l + 1, m);
+            const act = activations[l][n];
+            netctx.beginPath();
+            netctx.moveTo(a.x, a.y);
+            netctx.lineTo(b.x, b.y);
+            netctx.strokeStyle = `rgba(255,255,255,${0.04 + act * 0.12})`;
+            netctx.lineWidth = 0.8;
+            netctx.stroke();
+          }
+        }
+      }
+
+      // Nodes
+      layers.forEach((layer, lIdx) => {
+        layer.nodes && Array(layer.nodes).fill(0).forEach((_, nIdx) => {
+          const { x, y } = getNodePos(lIdx, nIdx);
+          const act = activations[lIdx][nIdx];
+          const r = 14;
+          netctx.beginPath();
+          netctx.arc(x, y, r, 0, Math.PI * 2);
+          const alpha = 0.2 + act * 0.8;
+          netctx.fillStyle = lIdx === 0 ? `rgba(0,229,255,${alpha})` :
+            lIdx === layers.length - 1 ? `rgba(255,107,53,${alpha})` :
+              `rgba(${lIdx === 2 ? '168,255,62' : lIdx === 3 ? '192,132,252' : '107,159,255'},${alpha})`;
+          netctx.fill();
+          netctx.strokeStyle = layer.color + '60';
+          netctx.lineWidth = 1.5;
+          netctx.stroke();
+
+          if (showLabels && layer.labels[nIdx]) {
+            netctx.fillStyle = act > 0.3 ? '#e8eaf0' : '#6b7280';
+            netctx.font = '9px JetBrains Mono, monospace';
+            netctx.textAlign = lIdx === 0 ? 'right' : lIdx === layers.length - 1 ? 'left' : 'center';
+            const lx = lIdx === 0 ? x - r - 4 : lIdx === layers.length - 1 ? x + r + 4 : x;
+            netctx.fillText(layer.labels[nIdx], lx, lIdx === 0 || lIdx === layers.length - 1 ? y + 4 : y + r + 12);
+          }
+        });
+
+        // Layer label
+        const lx = getNodePos(lIdx, 0).x;
+        netctx.fillStyle = '#3a4050';
+        netctx.font = '600 10px JetBrains Mono, monospace';
+        netctx.textAlign = 'center';
+        netctx.fillText(layer.name, lx, H - 10);
+        netctx.fillStyle = '#2a3040';
+        netctx.font = '9px JetBrains Mono, monospace';
+        netctx.fillText(`${layer.nodes}`, lx, H - 24);
+      });
+    }
+
+    function pulseNetwork() {
+      if (netAnimFrame) cancelAnimationFrame(netAnimFrame);
+      activations = layers.map(l => Array(l.nodes).fill(0));
+      let step = 0;
+      const totalSteps = layers.length * 18;
+
+      function animate() {
+        const layerProgress = step / 18;
+        const currentLayer = Math.floor(layerProgress);
+        const withinLayer = layerProgress - currentLayer;
+
+        for (let l = 0; l < layers.length; l++) {
+          for (let n = 0; n < layers[l].nodes; n++) {
+            if (l < currentLayer) {
+              activations[l][n] = Math.max(0, 0.9 - (currentLayer - l) * 0.15);
+            } else if (l === currentLayer) {
+              const delay = n / layers[l].nodes;
+              activations[l][n] = Math.max(0, Math.min(1, (withinLayer - delay) * layers[l].nodes));
+            } else {
+              activations[l][n] = 0;
+            }
+          }
+        }
+
+        drawNetwork();
+        step++;
+        if (step <= totalSteps + 20) netAnimFrame = requestAnimationFrame(animate);
+        else {
+          // fade out
+          let fade = 1;
+          function fadeOut() {
+            fade -= 0.03;
+            activations = activations.map(a => a.map(v => v * Math.max(0, fade)));
+            drawNetwork();
+            if (fade > 0) requestAnimationFrame(fadeOut);
+            else { activations = layers.map(l => Array(l.nodes).fill(0)); drawNetwork(); }
+          }
+          fadeOut();
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    function toggleNetLabels() {
+      showLabels = !showLabels;
+      drawNetwork();
+    }
+
+    drawNetwork();
+
+    // ─────────────────────────────────────────────
+    // LOSS CURVE
+    // ─────────────────────────────────────────────
+    const lossc = document.getElementById('loss-canvas');
+    const lossctx = lossc.getContext('2d');
+
+    function drawLossChart() {
+      const W = lossc.width, H = lossc.height;
+      lossctx.clearRect(0, 0, W, H);
+      lossctx.fillStyle = '#111318';
+      lossctx.fillRect(0, 0, W, H);
+
+      const pad = { l: 48, r: 20, t: 20, b: 32 };
+      const cW = W - pad.l - pad.r;
+      const cH = H - pad.t - pad.b;
+
+      // Grid
+      lossctx.strokeStyle = '#1f2530';
+      lossctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.t + i * (cH / 4);
+        lossctx.beginPath();
+        lossctx.moveTo(pad.l, y);
+        lossctx.lineTo(W - pad.r, y);
+        lossctx.stroke();
+        const val = 1 - i / 4;
+        lossctx.fillStyle = '#3a4050';
+        lossctx.font = '9px JetBrains Mono, monospace';
+        lossctx.textAlign = 'right';
+        lossctx.fillText(val.toFixed(2), pad.l - 6, y + 3);
+      }
+
+      // X axis labels
+      lossctx.fillStyle = '#3a4050';
+      lossctx.textAlign = 'center';
+      ['0', '10k', '20k', '30k', '40k', '50k epochs'].forEach((t, i) => {
+        const x = pad.l + i * (cW / 5);
+        lossctx.fillText(t, x, H - 6);
+      });
+
+      // Loss curves
+      const n = 200;
+      function lossCurve(x, noise, decay, floor) {
+        return floor + (1 - floor) * Math.exp(-decay * x) + (Math.random() - 0.5) * noise * Math.exp(-decay * x * 0.5);
+      }
+
+      function drawCurve(color, decay, floor, noise) {
+        lossctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const x = pad.l + i * (cW / n);
+          const t = i / n;
+          const y = pad.t + cH * (1 - lossCurve(t * 5, noise, decay, floor));
+          i === 0 ? lossctx.moveTo(x, y) : lossctx.lineTo(x, y);
+        }
+        lossctx.strokeStyle = color;
+        lossctx.lineWidth = 2;
+        lossctx.stroke();
+      }
+
+      drawCurve('#00e5ff', 4, 0.05, 0.03);   // train
+      drawCurve('#ff6b35', 3.5, 0.08, 0.04); // val
+
+      // Legend
+      lossctx.fillStyle = '#00e5ff';
+      lossctx.fillRect(W - 110, pad.t + 4, 12, 3);
+      lossctx.font = '9px JetBrains Mono, monospace';
+      lossctx.textAlign = 'left';
+      lossctx.fillText('train', W - 94, pad.t + 8);
+      lossctx.fillStyle = '#ff6b35';
+      lossctx.fillRect(W - 110, pad.t + 16, 12, 3);
+      lossctx.fillText('val', W - 94, pad.t + 20);
+
+      lossctx.fillStyle = '#3a4050';
+      lossctx.textAlign = 'left';
+      lossctx.font = '9px JetBrains Mono, monospace';
+      lossctx.fillText('loss', 4, pad.t + cH / 2);
+    }
+
+    drawLossChart();
+
+    // ─────────────────────────────────────────────
+    // SECTION 5 — TOKENIZER
+    // ─────────────────────────────────────────────
+    // Token types: 'whole' = kept as-is, 'split' = rare/compound word was broken, 'punct' = punctuation/symbol, 'num' = number piece
+    const tokenExamples = [
+      {
+        text: 'Write a socketcan CAN FD driver for Linux 6.1 with TJA1042 transceiver support.',
+        tokens: [
+          { t: 'Write', type: 'whole', reason: 'Common word → single token' },
+          { t: ' a', type: 'whole', reason: 'Common word → single token' },
+          { t: ' socket', type: 'split', reason: '"socketcan" is rare — BPE splits it into two known pieces' },
+          { t: 'can', type: 'split', reason: 'Second piece of "socketcan"' },
+          { t: ' CAN', type: 'whole', reason: 'Uppercase acronym — seen enough to keep whole' },
+          { t: ' FD', type: 'whole', reason: 'Common abbreviation in training data' },
+          { t: ' driver', type: 'whole', reason: 'Common word → single token' },
+          { t: ' for', type: 'whole', reason: 'Common word → single token' },
+          { t: ' Linux', type: 'whole', reason: 'Very common word → single token' },
+          { t: ' 6', type: 'num', reason: 'Numbers are often split at decimal points' },
+          { t: '.', type: 'punct', reason: 'Punctuation gets its own token' },
+          { t: '1', type: 'num', reason: 'Second part of "6.1" version number' },
+          { t: ' with', type: 'whole', reason: 'Common word → single token' },
+          { t: ' TJ', type: 'split', reason: '"TJA1042" is a part number — never seen in training, split into pieces' },
+          { t: 'A', type: 'split', reason: 'Piece of "TJA1042"' },
+          { t: '1042', type: 'num', reason: 'Numeric suffix of part number' },
+          { t: ' trans', type: 'split', reason: '"transceiver" is uncommon enough to split — BPE sees a known prefix' },
+          { t: 'ceiver', type: 'split', reason: 'Second piece of "transceiver"' },
+          { t: ' support', type: 'whole', reason: 'Common word → single token' },
+          { t: '.', type: 'punct', reason: 'Punctuation gets its own token' },
+        ]
+      },
+      {
+        text: 'The quick brown fox jumps over the lazy dog.',
+        tokens: [
+          { t: 'The', type: 'whole', reason: 'Extremely common → single token' },
+          { t: ' quick', type: 'whole', reason: 'Common adjective → single token' },
+          { t: ' brown', type: 'whole', reason: 'Common adjective → single token' },
+          { t: ' fox', type: 'whole', reason: 'Common noun → single token' },
+          { t: ' jumps', type: 'whole', reason: 'Common verb → single token' },
+          { t: ' over', type: 'whole', reason: 'Common word → single token' },
+          { t: ' the', type: 'whole', reason: 'Most common English word → single token' },
+          { t: ' lazy', type: 'whole', reason: 'Common adjective → single token' },
+          { t: ' dog', type: 'whole', reason: 'Common noun → single token' },
+          { t: '.', type: 'punct', reason: 'Punctuation gets its own token' },
+        ]
+      },
+      {
+        text: 'int can_rx_handler(struct net_device *dev, struct can_frame *cf) {',
+        tokens: [
+          { t: 'int', type: 'whole', reason: 'C keyword — extremely common in code training data' },
+          { t: ' can', type: 'split', reason: '"can_rx_handler" has no single token — split at underscore boundary' },
+          { t: '_', type: 'punct', reason: 'Underscore is its own token in code' },
+          { t: 'rx', type: 'split', reason: 'Abbreviation piece — seen in many driver names' },
+          { t: '_handler', type: 'split', reason: '"_handler" suffix is common enough to keep together' },
+          { t: '(', type: 'punct', reason: 'Punctuation → own token' },
+          { t: 'struct', type: 'whole', reason: 'C keyword — very common in code corpus' },
+          { t: ' net', type: 'split', reason: '"net_device" split — "net" is a known piece' },
+          { t: '_device', type: 'split', reason: '"_device" suffix seen often in Linux kernel code' },
+          { t: ' *', type: 'punct', reason: 'Pointer operator → own token' },
+          { t: 'dev', type: 'whole', reason: 'Common variable name → single token' },
+          { t: ',', type: 'punct', reason: 'Punctuation → own token' },
+          { t: ' struct', type: 'whole', reason: 'C keyword → single token' },
+          { t: ' can', type: 'split', reason: '"can_frame" split at underscore' },
+          { t: '_frame', type: 'split', reason: '"_frame" suffix — seen in networking code' },
+          { t: ' *', type: 'punct', reason: 'Pointer operator → own token' },
+          { t: 'cf', type: 'whole', reason: 'Short variable name → single token' },
+          { t: ')', type: 'punct', reason: 'Punctuation → own token' },
+          { t: ' {', type: 'punct', reason: 'Opening brace with space → own token' },
+        ]
+      }
+    ];
+
+    // Type → style mapping
+    const tokenStyles = {
+      whole: { bg: 'rgba(0,229,255,0.1)', border: 'rgba(0,229,255,0.35)', label: 'whole word', labelColor: '#00e5ff' },
+      split: { bg: 'rgba(255,107,53,0.1)', border: 'rgba(255,107,53,0.4)', label: 'split piece', labelColor: '#ff6b35' },
+      punct: { bg: 'rgba(107,114,128,0.1)', border: 'rgba(107,114,128,0.3)', label: 'punct/symbol', labelColor: '#9ca3af' },
+      num: { bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.35)', label: 'number', labelColor: '#fbbf24' },
+    };
+
+    let tokenTooltipEl = null;
+
+    function tokenizeExample(idx) {
+      const ex = tokenExamples[idx];
+      document.getElementById('token-input').textContent = ex.text;
+      const display = document.getElementById('token-display');
+      display.innerHTML = '';
+
+      // Legend (render once above tokens)
+      if (!document.getElementById('tok-legend')) {
+        const legend = document.createElement('div');
+        legend.id = 'tok-legend';
+        legend.style.cssText = 'display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.75rem;align-items:center;';
+        legend.innerHTML = `<span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--text-dim);letter-spacing:0.1em;">TOKEN TYPE:</span>` +
+          Object.entries(tokenStyles).map(([k, v]) =>
+            `<span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:0.15rem 0.5rem;border-radius:3px;background:${v.bg};border:1px solid ${v.border};color:${v.labelColor}">${v.label}</span>`
+          ).join('');
+        display.parentNode.insertBefore(legend, display);
+      }
+
+      // Tooltip element
+      if (!tokenTooltipEl) {
+        tokenTooltipEl = document.createElement('div');
+        tokenTooltipEl.style.cssText = `position:fixed;background:#181c24;border:1px solid #1f2530;border-radius:6px;padding:0.4rem 0.7rem;font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#e8eaf0;pointer-events:none;opacity:0;transition:opacity 0.15s;z-index:999;max-width:260px;line-height:1.5;`;
+        document.body.appendChild(tokenTooltipEl);
+      }
+
+      const splitCount = ex.tokens.filter(t => t.type === 'split').length;
+      const wholeCount = ex.tokens.filter(t => t.type === 'whole').length;
+
+      ex.tokens.forEach((tok, i) => {
+        const style = tokenStyles[tok.type];
+        const span = document.createElement('span');
+        span.className = 'token';
+        span.style.background = style.bg;
+        span.style.borderColor = style.border;
+        span.style.color = '#e8eaf0';
+        span.style.cursor = 'help';
+        span.textContent = tok.t;
+        span.title = '';
+
+        span.addEventListener('mouseenter', (e) => {
+          tokenTooltipEl.innerHTML = `<span style="color:${style.labelColor};font-weight:600">${style.label}</span><br>${tok.reason}`;
+          tokenTooltipEl.style.opacity = '1';
+        });
+        span.addEventListener('mousemove', (e) => {
+          tokenTooltipEl.style.left = (e.clientX + 12) + 'px';
+          tokenTooltipEl.style.top = (e.clientY - 10) + 'px';
+        });
+        span.addEventListener('mouseleave', () => { tokenTooltipEl.style.opacity = '0'; });
+
+        display.appendChild(span);
+        setTimeout(() => span.classList.add('show'), 50 + i * 55);
+      });
+
+      document.getElementById('token-count').textContent =
+        `${ex.tokens.length} tokens — ${ex.text.length} chars — ${wholeCount} whole words, ${splitCount} split pieces — hover any token for why`;
+    }
+
+    tokenizeExample(0);
+
+    // ─────────────────────────────────────────────
+    // TRANSFORMER FLOW ANIMATION
+    // ─────────────────────────────────────────────
+    function animTransformer() {
+      const ids = ['tf0', 'tf1', 'tf2', 'tf3', 'tf4', 'tf5'];
+      ids.forEach(id => document.getElementById(id).classList.remove('active'));
+      ids.forEach((id, i) => {
+        setTimeout(() => {
+          ids.forEach(id2 => document.getElementById(id2).classList.remove('active'));
+          document.getElementById(id).classList.add('active');
+        }, i * 500);
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // ATTENTION HEATMAP
+    // ─────────────────────────────────────────────
+    const attnc = document.getElementById('attn-canvas');
+    const attnctx = attnc.getContext('2d');
+    const attnTokens = ['write', 'a', 'CAN', 'FD', 'driver', 'Linux'];
+    // Rows = query (the token doing the attending)
+    // Cols = key  (the token being attended to)
+    // Realistic values: function words spread weakly; content words pair with semantic neighbours.
+    // Each row sums to ~1.0 (as if after softmax).
+    const attnWeights = [
+      //  write   a     CAN    FD    driver  Linux
+      [0.40, 0.04, 0.18, 0.08, 0.20, 0.10], // write
+      [0.18, 0.08, 0.18, 0.10, 0.26, 0.20], // a  ← notice: spreads evenly, no single spike
+      [0.10, 0.02, 0.28, 0.30, 0.18, 0.12], // CAN
+      [0.08, 0.02, 0.35, 0.32, 0.14, 0.09], // FD
+      [0.22, 0.03, 0.20, 0.08, 0.28, 0.19], // driver
+      [0.12, 0.03, 0.16, 0.07, 0.28, 0.34], // Linux
+    ];
+    const attnExplain = [
+      '"write" attends most to itself (it anchors the task intent) and "driver" (what to write).',
+      '"a" is a function/filler word — it has almost no semantic meaning, so it spreads attention weakly across all content words. No bright cells here is the correct answer.',
+      '"CAN" pairs tightly with "FD" — the model learned that "CAN FD" is one compound concept split across two tokens.',
+      '"FD" mirrors "CAN" strongly — they co-occur as a spec name so they learned to attend to each other.',
+      '"driver" looks at "write", "CAN", and "Linux" — it has learned the "Linux CAN driver" co-occurrence pattern.',
+      '"Linux" attends most to "driver" and itself — the kernel/driver association is strong in its training data.',
+    ];
+
+    function drawAttention(highlightRow) {
+      const W = attnc.width, H = attnc.height;
+      attnctx.clearRect(0, 0, W, H);
+      attnctx.fillStyle = '#111318';
+      attnctx.fillRect(0, 0, W, H);
+
+      const n = attnTokens.length;
+      const cellSize = 46;
+      const padL = 76, padT = 76;
+
+      // Axis header labels
+      attnctx.fillStyle = '#6b7280';
+      attnctx.font = '9px JetBrains Mono, monospace';
+      attnctx.textAlign = 'center';
+      attnctx.fillText('key tokens (being attended to) →', padL + n * cellSize / 2, 12);
+      attnctx.save();
+      attnctx.translate(12, padT + n * cellSize / 2);
+      attnctx.rotate(-Math.PI / 2);
+      attnctx.textAlign = 'center';
+      attnctx.fillText('← query token (doing the attending)', 0, 0);
+      attnctx.restore();
+
+      // Column labels (keys — top)
+      attnctx.font = '600 11px JetBrains Mono, monospace';
+      attnctx.textAlign = 'center';
+      attnTokens.forEach((t, i) => {
+        attnctx.fillStyle = '#9ca3af';
+        attnctx.fillText(t, padL + i * cellSize + cellSize / 2, padT - 10);
+      });
+
+      // Row labels (queries — left)
+      attnctx.textAlign = 'right';
+      attnTokens.forEach((t, i) => {
+        attnctx.fillStyle = (highlightRow === i) ? '#e8eaf0' : '#9ca3af';
+        attnctx.font = (highlightRow === i) ? '700 11px JetBrains Mono, monospace' : '600 11px JetBrains Mono, monospace';
+        attnctx.fillText(t, padL - 8, padT + i * cellSize + cellSize / 2 + 4);
+      });
+
+      // Cells
+      for (let row = 0; row < n; row++) {
+        for (let col = 0; col < n; col++) {
+          const val = attnWeights[row][col];
+          const x = padL + col * cellSize;
+          const y = padT + row * cellSize;
+          const dimmed = highlightRow !== undefined && highlightRow !== row;
+          const intensity = val / 0.40;
+          const rr = Math.round(lerp(24, 192, intensity));
+          const gg = Math.round(lerp(28, 132, intensity));
+          const bb = Math.round(lerp(36, 252, intensity));
+          attnctx.globalAlpha = dimmed ? 0.18 : 1;
+          attnctx.fillStyle = `rgb(${rr},${gg},${bb})`;
+          attnctx.fillRect(x + 1, y + 1, cellSize - 3, cellSize - 3);
+          if (highlightRow === row) {
+            attnctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            attnctx.lineWidth = 1;
+            attnctx.strokeRect(x + 1, y + 1, cellSize - 3, cellSize - 3);
+          }
+          if (!dimmed && val >= 0.18) {
+            attnctx.fillStyle = val > 0.26 ? '#fff' : 'rgba(255,255,255,0.75)';
+            attnctx.font = `${val > 0.26 ? '700' : '600'} 10px JetBrains Mono, monospace`;
+            attnctx.textAlign = 'center';
+            attnctx.textBaseline = 'middle';
+            attnctx.fillText(val.toFixed(2), x + cellSize / 2 - 1, y + cellSize / 2 - 1);
+          }
+          attnctx.globalAlpha = 1;
+          attnctx.textBaseline = 'alphabetic';
+        }
+      }
+
+      // Colour bar
+      const cbX = padL, cbY = padT + n * cellSize + 10, cbW = n * cellSize, cbH = 7;
+      const grad = attnctx.createLinearGradient(cbX, 0, cbX + cbW, 0);
+      grad.addColorStop(0, 'rgb(24,28,36)');
+      grad.addColorStop(0.5, 'rgb(108,80,144)');
+      grad.addColorStop(1, 'rgb(192,132,252)');
+      attnctx.fillStyle = grad;
+      attnctx.fillRect(cbX, cbY, cbW, cbH);
+      attnctx.fillStyle = '#6b7280';
+      attnctx.font = '9px JetBrains Mono, monospace';
+      attnctx.textAlign = 'left';
+      attnctx.fillText('low', cbX, cbY + cbH + 11);
+      attnctx.textAlign = 'right';
+      attnctx.fillText('high attention', cbX + cbW, cbY + cbH + 11);
+    }
+
+    attnc.addEventListener('mousemove', (e) => {
+      const rect = attnc.getBoundingClientRect();
+      const scaleY = attnc.height / rect.height;
+      const cy = (e.clientY - rect.top) * scaleY;
+      const row = Math.floor((cy - 76) / 46);
+      if (row >= 0 && row < attnTokens.length) {
+        drawAttention(row);
+        const el = document.getElementById('attn-explain');
+        el.textContent = attnExplain[row];
+        el.style.color = '#e8eaf0';
+      } else {
+        drawAttention();
+        const el = document.getElementById('attn-explain');
+        el.textContent = 'Hover a row to see what that token attends to — and why.';
+        el.style.color = 'var(--text-dim)';
+      }
+    });
+    attnc.addEventListener('mouseleave', () => {
+      drawAttention();
+      const el = document.getElementById('attn-explain');
+      if (el) { el.textContent = 'Hover a row to see what that token attends to — and why.'; el.style.color = 'var(--text-dim)'; }
+    });
+
+    drawAttention();
+
+    // ─────────────────────────────────────────────
+    // FUNCTION APPROXIMATION CANVAS
+    // ─────────────────────────────────────────────
+    const fac = document.getElementById('fa-canvas');
+    const factx = fac.getContext('2d');
+    let faPoints = [];
+    let faPolyCoeffs = null;
+    let faNNWeights = null;
+    let faAnimId = null;
+
+    const FA_PAD = { l: 48, r: 24, t: 24, b: 36 };
+
+    function faCanvasToData(cx, cy) {
+      const W = fac.width, H = fac.height;
+      const cW = W - FA_PAD.l - FA_PAD.r;
+      const cH = H - FA_PAD.t - FA_PAD.b;
+      return {
+        x: (cx - FA_PAD.l) / cW,
+        y: 1 - (cy - FA_PAD.t) / cH
+      };
+    }
+
+    function faDataToCanvas(x, y) {
+      const W = fac.width, H = fac.height;
+      const cW = W - FA_PAD.l - FA_PAD.r;
+      const cH = H - FA_PAD.t - FA_PAD.b;
+      return {
+        cx: FA_PAD.l + x * cW,
+        cy: FA_PAD.t + (1 - y) * cH
+      };
+    }
+
+    function faDrawBase() {
+      const W = fac.width, H = fac.height;
+      factx.clearRect(0, 0, W, H);
+      factx.fillStyle = '#111318';
+      factx.fillRect(0, 0, W, H);
+
+      const cW = W - FA_PAD.l - FA_PAD.r;
+      const cH = H - FA_PAD.t - FA_PAD.b;
+
+      // Grid
+      factx.strokeStyle = '#1a1f2a';
+      factx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = FA_PAD.t + i * cH / 4;
+        factx.beginPath(); factx.moveTo(FA_PAD.l, y); factx.lineTo(W - FA_PAD.r, y); factx.stroke();
+        const x = FA_PAD.l + i * cW / 4;
+        factx.beginPath(); factx.moveTo(x, FA_PAD.t); factx.lineTo(x, FA_PAD.t + cH); factx.stroke();
+      }
+
+      // Axes
+      factx.strokeStyle = '#2a3040';
+      factx.lineWidth = 1.5;
+      factx.beginPath();
+      factx.moveTo(FA_PAD.l, FA_PAD.t); factx.lineTo(FA_PAD.l, FA_PAD.t + cH);
+      factx.moveTo(FA_PAD.l, FA_PAD.t + cH); factx.lineTo(W - FA_PAD.r, FA_PAD.t + cH);
+      factx.stroke();
+
+      // Axis labels
+      factx.fillStyle = '#3a4050';
+      factx.font = '9px JetBrains Mono, monospace';
+      factx.textAlign = 'right';
+      factx.fillText('1.0', FA_PAD.l - 4, FA_PAD.t + 4);
+      factx.fillText('0.5', FA_PAD.l - 4, FA_PAD.t + cH / 2 + 4);
+      factx.fillText('0.0', FA_PAD.l - 4, FA_PAD.t + cH + 4);
+      factx.textAlign = 'center';
+      factx.fillText('input x →', FA_PAD.l + cW / 2, H - 4);
+      factx.fillText('↑ output y', FA_PAD.l - 32, FA_PAD.t + cH / 2);
+    }
+
+    function faDrawPoints() {
+      faPoints.forEach((p, i) => {
+        const { cx, cy } = faDataToCanvas(p.x, p.y);
+        factx.beginPath();
+        factx.arc(cx, cy, 5, 0, Math.PI * 2);
+        factx.fillStyle = '#a8ff3e';
+        factx.fill();
+        factx.strokeStyle = 'rgba(168,255,62,0.4)';
+        factx.lineWidth = 2;
+        factx.stroke();
+      });
+    }
+
+    // Polynomial fit via least squares (degree = min(points-1, 4))
+    function faFitPolyCoeffs(pts, degree) {
+      const n = pts.length;
+      if (n < 2) return null;
+      const d = Math.min(degree, n - 1);
+      // Build Vandermonde matrix A and vector b
+      const A = [];
+      const b = [];
+      for (let i = 0; i < n; i++) {
+        const row = [];
+        for (let j = 0; j <= d; j++) row.push(Math.pow(pts[i].x, j));
+        A.push(row);
+        b.push(pts[i].y);
+      }
+      // Normal equations: AᵀA·c = Aᵀb
+      const cols = d + 1;
+      const AtA = Array.from({ length: cols }, () => Array(cols).fill(0));
+      const Atb = Array(cols).fill(0);
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < cols; j++) {
+          Atb[j] += A[i][j] * b[i];
+          for (let k = 0; k < cols; k++) AtA[j][k] += A[i][j] * A[i][k];
+        }
+      }
+      // Gaussian elimination
+      const aug = AtA.map((row, i) => [...row, Atb[i]]);
+      for (let col = 0; col < cols; col++) {
+        let maxRow = col;
+        for (let row = col + 1; row < cols; row++)
+          if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) maxRow = row;
+        [aug[col], aug[maxRow]] = [aug[maxRow], aug[col]];
+        const pivot = aug[col][col];
+        if (Math.abs(pivot) < 1e-10) continue;
+        for (let row = 0; row < cols; row++) {
+          if (row === col) continue;
+          const factor = aug[row][col] / pivot;
+          for (let k = col; k <= cols; k++) aug[row][k] -= factor * aug[col][k];
+        }
+        for (let k = col; k <= cols; k++) aug[col][k] /= pivot;
+      }
+      return aug.map(row => row[cols]);
+    }
+
+    function faEvalPoly(coeffs, x) {
+      return coeffs.reduce((sum, c, i) => sum + c * Math.pow(x, i), 0);
+    }
+
+    function faFitPoly() {
+      if (faPoints.length < 2) {
+        document.getElementById('fa-label').textContent = 'Need at least 2 points — click canvas to add';
+        return;
+      }
+      const deg = Math.min(4, faPoints.length - 1);
+      faPolyCoeffs = faFitPolyCoeffs(faPoints, deg);
+      faDrawAll();
+      const termStr = faPolyCoeffs.map((c, i) => {
+        if (Math.abs(c) < 0.001) return null;
+        const term = i === 0 ? c.toFixed(3) : i === 1 ? `${c.toFixed(2)}x` : `${c.toFixed(2)}x^${i}`;
+        return term;
+      }).filter(Boolean).reverse().join(' + ');
+      document.getElementById('fa-label').textContent = `Polynomial (degree ${deg}): y = ${termStr}`;
+    }
+
+    // Tiny neural net fit using gradient descent
+    function faFitNN() {
+      if (faPoints.length < 2) {
+        document.getElementById('fa-label').textContent = 'Need at least 2 points — click canvas to add';
+        return;
+      }
+      if (faAnimId) cancelAnimationFrame(faAnimId);
+
+      // 1 → 8 → 8 → 1, tanh activations
+      const H1 = 10, H2 = 8;
+      let w1 = Array.from({ length: H1 }, () => Array.from({ length: 1 }, () => (Math.random() - 0.5) * 2));
+      let b1 = Array(H1).fill(0).map(() => (Math.random() - 0.5) * 0.5);
+      let w2 = Array.from({ length: H2 }, () => Array.from({ length: H1 }, () => (Math.random() - 0.5) * 0.5));
+      let b2 = Array(H2).fill(0).map(() => (Math.random() - 0.5) * 0.3);
+      let w3 = Array.from({ length: 1 }, () => Array.from({ length: H2 }, () => (Math.random() - 0.5) * 0.5));
+      let b3 = [0];
+
+      const tanh = x => Math.tanh(x);
+      const dtanh = x => 1 - Math.tanh(x) ** 2;
+      const lr = 0.03;
+      let epoch = 0;
+      const maxEpochs = 1200;
+
+      function nnForward(x) {
+        const z1 = w1.map((row, i) => row[0] * x + b1[i]);
+        const a1 = z1.map(tanh);
+        const z2 = w2.map((row, i) => row.reduce((s, v, j) => s + v * a1[j], 0) + b2[i]);
+        const a2 = z2.map(tanh);
+        const z3 = [w3[0].reduce((s, v, j) => s + v * a2[j], 0) + b3[0]];
+        return { a1, z1, a2, z2, y: z3[0] };
+      }
+
+      function nnTrain() {
+        for (let iter = 0; iter < 20; iter++) {
+          faPoints.forEach(pt => {
+            const { a1, z1, a2, z2, y } = nnForward(pt.x);
+            const dL = 2 * (y - pt.y);
+            // Output layer
+            const dw3 = a2.map(v => dL * v);
+            const db3 = dL;
+            // H2 layer
+            const da2 = w3[0].map((v, j) => dL * v);
+            const dz2 = da2.map((d, j) => d * dtanh(z2[j]));
+            const dw2 = dz2.map((d, i) => a1.map(a => d * a));
+            const db2arr = dz2;
+            // H1 layer
+            const da1 = dz2.map((d, i) => w2[i]).reduce((acc, row, i) => {
+              row.forEach((v, j) => { acc[j] = (acc[j] || 0) + dz2[i] * v; });
+              return acc;
+            }, Array(H1).fill(0));
+            const dz1 = da1.map((d, j) => d * dtanh(z1[j]));
+            // Update
+            w3[0] = w3[0].map((v, j) => v - lr * dw3[j]);
+            b3[0] -= lr * db3;
+            w2 = w2.map((row, i) => row.map((v, j) => v - lr * dw2[i][j]));
+            b2 = b2.map((v, i) => v - lr * db2arr[i]);
+            w1 = w1.map((row, i) => row.map((v, j) => v - lr * dz1[i] * pt.x));
+            b1 = b1.map((v, i) => v - lr * dz1[i]);
+          });
+          epoch++;
+        }
+        faNNWeights = (x) => nnForward(x).y;
+        faDrawAll();
+        document.getElementById('fa-label').textContent =
+          `Neural net training... epoch ${epoch}/${maxEpochs} — ${faPoints.length} hidden neurons × 2 layers`;
+        if (epoch < maxEpochs) faAnimId = requestAnimationFrame(nnTrain);
+        else document.getElementById('fa-label').textContent =
+          `Neural net fitted — ${H1}+${H2} hidden units, ${maxEpochs} epochs, no equation needed`;
+      }
+      faAnimId = requestAnimationFrame(nnTrain);
+    }
+
+    function faDrawCurve(fn, color, dash) {
+      if (faPoints.length < 2) return;
+      // Only draw curve within the data range + small padding, so it doesn't
+      // rocket off to the edges of the canvas where extrapolation is meaningless
+      const xs = faPoints.map(p => p.x);
+      const xMin = Math.max(0, Math.min(...xs) - 0.06);
+      const xMax = Math.min(1, Math.max(...xs) + 0.06);
+      const steps = 260;
+      factx.save();
+      // Clip to canvas plot area so runaway curves exit cleanly, not at graph boundary
+      const { cx: clipL } = faDataToCanvas(0, 0);
+      const { cx: clipR } = faDataToCanvas(1, 0);
+      const { cy: clipT } = faDataToCanvas(0, 1.05);
+      const { cy: clipB } = faDataToCanvas(0, -0.05);
+      factx.beginPath();
+      factx.rect(clipL, clipT, clipR - clipL, clipB - clipT);
+      factx.clip();
+      factx.beginPath();
+      factx.setLineDash(dash || []);
+      let started = false;
+      for (let i = 0; i <= steps; i++) {
+        const x = xMin + i * (xMax - xMin) / steps;
+        const y = fn(x);
+        const { cx, cy } = faDataToCanvas(x, y);
+        if (!started) { factx.moveTo(cx, cy); started = true; }
+        else factx.lineTo(cx, cy);
+      }
+      factx.strokeStyle = color;
+      factx.lineWidth = 2.5;
+      factx.stroke();
+      factx.setLineDash([]);
+      factx.restore();
+    }
+
+    function faDrawAll() {
+      faDrawBase();
+      if (faPolyCoeffs) {
+        faDrawCurve(x => faEvalPoly(faPolyCoeffs, x), '#00e5ff', [6, 3]);
+        // Legend
+        factx.fillStyle = '#00e5ff';
+        factx.font = '10px JetBrains Mono, monospace';
+        factx.textAlign = 'left';
+        factx.fillText('── polynomial fit (exact)', FA_PAD.l + 8, FA_PAD.t + 16);
+      }
+      if (faNNWeights) {
+        faDrawCurve(faNNWeights, '#a8ff3e');
+        factx.fillStyle = '#a8ff3e';
+        factx.font = '10px JetBrains Mono, monospace';
+        factx.textAlign = 'left';
+        factx.fillText('── neural net fit (learned)', FA_PAD.l + 8, FA_PAD.t + 30);
+      }
+      faDrawPoints();
+    }
+
+    // Seed with a few default points so it's not blank
+    function faPreloadPoints() {
+      const defaults = [[0.1, 0.3], [0.2, 0.65], [0.35, 0.8], [0.5, 0.55], [0.62, 0.25], [0.75, 0.5], [0.88, 0.7]];
+      faPoints = defaults.map(([x, y]) => ({ x, y }));
+      faDrawAll();
+    }
+
+    fac.addEventListener('click', (e) => {
+      const rect = fac.getBoundingClientRect();
+      const scaleX = fac.width / rect.width;
+      const scaleY = fac.height / rect.height;
+      const cx = (e.clientX - rect.left) * scaleX;
+      const cy = (e.clientY - rect.top) * scaleY;
+      const { x, y } = faCanvasToData(cx, cy);
+      if (x >= 0 && x <= 1 && y >= 0 && y <= 1) {
+        faPoints.push({ x, y });
+        faPolyCoeffs = null;
+        faNNWeights = null;
+        if (faAnimId) { cancelAnimationFrame(faAnimId); faAnimId = null; }
+        faDrawAll();
+        document.getElementById('fa-label').textContent =
+          `${faPoints.length} point${faPoints.length > 1 ? 's' : ''} — now fit a curve`;
+      }
+    });
+
+    function faReset() {
+      if (faAnimId) { cancelAnimationFrame(faAnimId); faAnimId = null; }
+      faPoints = [];
+      faPolyCoeffs = null;
+      faNNWeights = null;
+      faDrawBase();
+      document.getElementById('fa-label').textContent = 'Click the canvas to place data points, then fit';
+    }
+
+
+    faPreloadPoints();
+
+    setInterval(() => {
+      document.querySelector('button[onclick="pulseNetwork()"]').click();
+    }, 2000);
+
+    // setInterval(() => {
+    //   document.querySelector('button[onclick="animTransformer()"]').click();
+    // }, 2000);
+  </script>
+</body>
+
+</html>
